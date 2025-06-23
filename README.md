@@ -1,4 +1,4 @@
-# Paulo Habit Analysis
+# App de Hábitos
 
 ## Visão Geral
 
