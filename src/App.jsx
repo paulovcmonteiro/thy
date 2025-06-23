@@ -4,7 +4,6 @@ import useAuth from './hooks/useAuth';
 import LoginForm from './components/auth/LoginForm';
 import AuthHeader from './components/auth/AuthHeader';
 import Dashboard from './Dashboard';
-import DashboardHeader from './components/dashboardSections/DashboardHeader.jsx';
 
 const App = () => {
   const { user, loading } = useAuth();

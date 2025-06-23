@@ -28,6 +28,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Novo estado para controlar o passo do formulário mobile
+  const [step, setStep] = useState(1);
+
   // Lista de hábitos com emojis
   const habitsList = [
     { key: 'meditar', label: '🧘 Meditar', description: 'Meditação ou mindfulness' },
@@ -190,177 +193,225 @@ const AddDayForm = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  // Função para resetar passo ao fechar
+  const handleCloseAndReset = () => {
+    setStep(1);
+    handleClose();
+  };
+
+  // Função para submit final
+  const handleFinalSubmit = async (e) => {
+    if (e) e.preventDefault();
+    await handleSubmit(e);
+    setStep(1);
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <Calendar className="text-blue-600" />
-            Adicionar Dia
-          </h2>
+    <div className="fixed inset-0 bg-white flex items-center justify-center z-50 p-0 sm:p-4">
+      {/* MOBILE/TABLET: FLUXO EM 2 TELAS */}
+      <div className="w-full h-full max-w-md mx-auto flex flex-col justify-between p-0 sm:max-w-lg md:max-w-xl lg:hidden relative bg-white">
+        {/* Header fixo com X */}
+        <div className="w-full flex items-center justify-end px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10" style={{ minHeight: 56 }}>
           <button
-            onClick={handleClose}
+            onClick={handleCloseAndReset}
             disabled={loading}
-            className="text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-700 text-3xl"
+            style={{ zIndex: 10 }}
           >
-            <X size={24} />
+            <X size={32} />
           </button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          
-          {/* Data e Info Básica */}
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-            <h3 className="font-semibold text-blue-800 mb-3">
-              📅 Hoje: {todayFormatted}
-            </h3>
-            
-            <div className="grid gap-4">
+        {step === 1 && (
+          <>
+            {/* Conteúdo principal com scroll se necessário */}
+            <div className="flex-1 overflow-y-auto px-4 pt-2 pb-32 w-full">
               {/* Data */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  📅 Data *
-                </label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => handleInputChange('date', e.target.value)}
-                  max={today} // Não permitir datas futuras
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.date ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  disabled={loading}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 Não é possível registrar dias futuros
-                </p>
-                {errors.date && <p className="text-red-500 text-sm mt-1">{errors.date}</p>}
-              </div>
-
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                max={today}
+                className="w-full text-xl px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold mb-3"
+                disabled={loading}
+                style={{ fontSize: '1.2rem' }}
+              />
               {/* Peso */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ⚖️ Peso (kg) - Opcional
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={formData.peso}
-                  onChange={(e) => handleInputChange('peso', e.target.value)}
-                  placeholder="Ex: 82.5"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.peso ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  disabled={loading}
-                />
-                {errors.peso && <p className="text-red-500 text-sm mt-1">{errors.peso}</p>}
+              <input
+                type="number"
+                step="0.1"
+                value={formData.peso}
+                onChange={(e) => handleInputChange('peso', e.target.value)}
+                placeholder="Peso (kg)"
+                className="w-full text-xl px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold mb-4"
+                disabled={loading}
+                style={{ fontSize: '1.2rem' }}
+              />
+              {/* Hábitos em lista vertical, botões grandes */}
+              <div className="flex flex-col gap-3 my-4">
+                {habitsList.map((habit, idx) => (
+                  <button
+                    key={habit.key}
+                    type="button"
+                    onClick={() => handleHabitToggle(habit.key)}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-300 text-3xl w-full ${
+                      formData[habit.key]
+                        ? 'bg-green-100 border-green-500 scale-105'
+                        : 'bg-gray-50 border-gray-200 opacity-90'
+                    }`}
+                    style={{ minHeight: 64 }}
+                    disabled={loading}
+                  >
+                    <span className="text-5xl">{habit.label.split(' ')[0]}</span>
+                    <span className="text-base font-semibold text-gray-800 flex-1 text-left">{habit.label.replace(/^[^ ]+ /, '')}</span>
+                    <span className={`w-7 h-7 flex items-center justify-center rounded-full border-2 ${formData[habit.key] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>{formData[habit.key] && <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Hábitos */}
-          <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
-            <h3 className="font-semibold text-gray-800 mb-3 flex items-center justify-between">
-              🎯 Hábitos de Hoje
-              <span className="text-sm font-normal text-gray-600 bg-gray-200 px-2 py-1 rounded">
-                {habitosCompletos}/7 completos
-              </span>
-            </h3>
-            
-            <div className="space-y-3">
-              {habitsList.map((habit) => (
-                <div 
-                  key={habit.key}
-                  className={`bg-white p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                    formData[habit.key] 
-                      ? 'border-green-300 bg-green-50 shadow-sm' 
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                  onClick={() => handleHabitToggle(habit.key)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
+            {/* Botão Próximo fixo na base */}
+            <div className="w-full px-4 pb-4 pt-2 bg-white fixed bottom-0 left-0 z-20">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={loading}
+                className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+                style={{ minHeight: 64 }}
+              >
+                Próximo 1/2
+              </button>
+            </div>
+          </>
+        )}
+        {step === 2 && (
+          <>
+            <div className="flex flex-col justify-between h-full w-full">
+              <div className="mb-8 mt-8">
+                <div className="text-2xl font-bold text-gray-800 mb-6 text-center">Como foi hoje?</div>
+                <textarea
+                  value={formData.obs}
+                  onChange={(e) => handleInputChange('obs', e.target.value)}
+                  placeholder="Escreva aqui seu comentário, reflexão ou diagnóstico do dia..."
+                  rows={8}
+                  className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg resize-none"
+                  style={{ minHeight: 180 }}
+                  disabled={loading}
+                  autoFocus
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleFinalSubmit}
+                disabled={loading}
+                className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg mt-auto disabled:opacity-60"
+                style={{ minHeight: 64 }}
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                ) : (
+                  <>
+                    <Save size={28} />
+                    Salvar
+                  </>
+                )}
+              </button>
+              {/* Voltar */}
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={loading}
+                className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 text-3xl"
+                style={{ zIndex: 10 }}
+              >
+                &#8592;
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+      {/* DESKTOP: TUDO EM UMA TELA SÓ */}
+      <div className="hidden lg:flex items-center justify-center fixed inset-0 z-50 bg-black bg-opacity-10">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-0 relative flex flex-col" style={{ maxHeight: '90vh', minWidth: '520px' }}>
+          {/* Botão de fechar no topo direito */}
+          <button
+            onClick={handleCloseAndReset}
+            disabled={loading}
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 text-3xl z-20"
+          >
+            <X size={32} />
+          </button>
+          {/* Conteúdo rolável */}
+          <div className="flex-1 overflow-y-auto px-10 pt-10 pb-32">
+            <form onSubmit={handleFinalSubmit} className="flex flex-col gap-8">
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                max={today}
+                className="w-full max-w-2xl mx-auto text-xl px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold"
+                disabled={loading}
+                style={{ fontSize: '1.2rem' }}
+              />
+              <input
+                type="number"
+                step="0.1"
+                value={formData.peso}
+                onChange={(e) => handleInputChange('peso', e.target.value)}
+                placeholder="Peso (kg)"
+                className="w-full max-w-2xl mx-auto text-xl px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold"
+                disabled={loading}
+                style={{ fontSize: '1.2rem' }}
+              />
+              <div className="flex flex-col gap-4 my-2 w-full max-w-2xl mx-auto">
+                {habitsList.map((habit, idx) => (
+                  <button
+                    key={habit.key}
+                    type="button"
+                    onClick={() => handleHabitToggle(habit.key)}
+                    className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-300 text-3xl w-full ${
                       formData[habit.key]
-                        ? 'border-green-500 bg-green-500'
-                        : 'border-gray-300'
-                    }`}>
-                      {formData[habit.key] && (
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-800">{habit.label}</div>
-                      <div className="text-sm text-gray-600">{habit.description}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                        ? 'bg-green-100 border-green-500 scale-105'
+                        : 'bg-gray-50 border-gray-200 opacity-90'
+                    }`}
+                    style={{ minHeight: 72 }}
+                    disabled={loading}
+                  >
+                    <span className="text-5xl">{habit.label.split(' ')[0]}</span>
+                    <span className="text-lg font-semibold text-gray-800 flex-1 text-left">{habit.label.replace(/^[^ ]+ /, '')}</span>
+                    <span className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${formData[habit.key] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>{formData[habit.key] && <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}</span>
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={formData.obs}
+                onChange={(e) => handleInputChange('obs', e.target.value)}
+                placeholder="Escreva aqui seu comentário, reflexão ou diagnóstico do dia..."
+                rows={5}
+                className="w-full max-w-2xl mx-auto px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg resize-none"
+                style={{ minHeight: 120 }}
+                disabled={loading}
+              />
+            </form>
           </div>
-
-          {/* Observações */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              📝 Observações do Dia
-            </label>
-            <textarea
-              value={formData.obs}
-              onChange={(e) => handleInputChange('obs', e.target.value)}
-              placeholder="Como foi o dia? Algo especial aconteceu?"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Mensagens de Erro/Sucesso */}
-          {errors.submit && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {errors.submit}
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-              {successMessage}
-            </div>
-          )}
-
-          {/* Botões */}
-          <div className="flex gap-3 pt-4 border-t">
+          {/* Botão Salvar fixo na base */}
+          <div className="w-full px-10 pb-8 pt-4 bg-white sticky bottom-0 left-0 z-30 border-t border-gray-100">
             <button
               type="button"
-              onClick={handleClose}
+              onClick={handleFinalSubmit}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full max-w-2xl mx-auto py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+              style={{ minHeight: 64 }}
             >
               {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Salvando...
-                </>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
               ) : (
                 <>
-                  <Save size={16} />
-                  Salvar Dia
+                  <Save size={28} />
+                  Salvar
                 </>
               )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

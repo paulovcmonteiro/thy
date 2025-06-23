@@ -8,6 +8,22 @@ O app é focado em produtividade, saúde e autoconhecimento, com interface moder
 
 ---
 
+## Novidades e Mudanças Visuais (2024-06-23)
+
+- **Dashboard e formulário com design ultra minimalista e mobile-first**:
+  - Header do app simplificado: só logo e botão de sair.
+  - Remoção de textos e áreas informativas desnecessárias no topo do dashboard.
+  - Botão "Adicionar Hoje" centralizado, grande e destacado em todas as telas.
+- **Formulário de registro diário (AddDayForm) repensado**:
+  - Mobile/tablet: fluxo em 2 etapas (hábitos + parte qualitativa), botões grandes, experiência sem poluição visual.
+  - Desktop: tudo em uma tela só, inputs e botões grandes, botão "Salvar" sempre visível.
+  - Botões de hábitos grandes, fáceis de clicar, com feedback visual verde.
+  - Área de observação/qualitativa com destaque e espaço confortável.
+- **Remoção do DashboardHeader** e de qualquer cabeçalho redundante.
+- **Experiência consistente e clean em todos os dispositivos.**
+
+---
+
 ## Principais Funcionalidades
 
 - **Login seguro** com autenticação Firebase
@@ -24,14 +40,13 @@ O app é focado em produtividade, saúde e autoconhecimento, com interface moder
 ```
 src/
 │
-├── app.jsx                # Componente raiz, faz autenticação e roteamento
+├── App.jsx                # Componente raiz, faz autenticação e roteamento
 ├── Dashboard.jsx          # Dashboard principal, orquestra todas as seções
 │
 ├── components/
-│   ├── auth/                  # Componentes de autenticação (login, header)
-│   ├── habitForms/            # Formulários (ex: adicionar dia)
+│   ├── auth/                  # Componentes de autenticação (login, header minimalista)
+│   ├── habitForms/            # Formulários (ex: AddDayForm - registro diário minimalista)
 │   ├── dashboardSections/     # Seções do dashboard:
-│   │   ├── DashboardHeader.jsx         # Cabeçalho com nome do usuário e período analisado
 │   │   ├── ProgressOverviewSection.jsx # Gráficos de evolução geral (completude e peso)
 │   │   ├── HabitPerformanceSection.jsx # Performance detalhada de cada hábito individual
 │   │   ├── HabitInsightsSection.jsx    # Insights automáticos e destaques por hábito
@@ -64,7 +79,7 @@ src/
 
 ## O que faz cada parte do app?
 
-### app.jsx
+### App.jsx
 
 Responsável por:
 
@@ -81,7 +96,6 @@ Responsável por:
 
 ### Seções do Dashboard (components/dashboardSections)
 
-- **DashboardHeader.jsx**: Exibe o nome do usuário e o período analisado, servindo como cabeçalho do dashboard.
 - **ProgressOverviewSection.jsx**: Mostra gráficos de evolução geral, incluindo:
   - Gráfico de completude semanal dos hábitos
   - Gráfico de evolução do peso

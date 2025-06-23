@@ -4,7 +4,7 @@ import { Plus, Calendar } from 'lucide-react';
 import useDashboardData  from './hooks/useDashboardData';
 
 // Importando todas as seções
-import DashboardHeader from './components/dashboardSections/DashboardHeader.jsx';
+// import DashboardHeader from './components/dashboardSections/DashboardHeader.jsx';
 import ProgressOverviewSection from './components/dashboardSections/ProgressOverviewSection.jsx';
 import HabitPerformanceSection from './components/dashboardSections/HabitPerformanceSection.jsx';
 import HabitInsightsSection from './components/dashboardSections/HabitInsightsSection.jsx';
@@ -70,42 +70,20 @@ const Dashboard = () => {
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
       
-      <DashboardHeader analysisInfo={data.analysisInfo} />
-
-      {/* BOTÃO PARA ADICIONAR DIA DE HOJE */}
-      <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">
-              📅 Registrar Hábitos de Hoje
-            </h3>
-            <p className="text-gray-600 text-sm">
-              {new Date().toLocaleDateString('pt-BR', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {data.weeklyCompletionData?.length > 0 
-                ? `📊 ${data.weeklyCompletionData.length} semanas registradas`
-                : '⚠️ Nenhuma semana registrada ainda'
-              }
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAddDayForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-medium"
-          >
-            <Calendar size={20} />
-            Adicionar Hoje
-          </button>
-        </div>
+      {/* BOTÃO PARA ADICIONAR DIA DE HOJE - MOBILE/TABLET/ DESKTOP CLEAN */}
+      <div className="flex justify-center items-center my-12 w-full">
+        <button
+          onClick={() => setShowAddDayForm(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-2xl px-10 py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-4 font-bold w-full max-w-xl justify-center"
+          style={{ minHeight: '90px' }}
+        >
+          <Plus size={36} />
+          Hoje
+        </button>
       </div>
 
-      {/* BOTÃO FLUTUANTE */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* BOTÃO FLUTUANTE - ESCONDER NO MOBILE */}
+      <div className="fixed bottom-6 right-6 z-40 hidden md:block">
         <button
           onClick={() => setShowAddDayForm(true)}
           className="bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
