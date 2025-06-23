@@ -1,268 +1,155 @@
-# 📊 Análise de Hábitos - Paulo
+# Paulo Habit Analysis
 
-Um dashboard interativo para acompanhar e analisar hábitos pessoais com métricas detalhadas.
+## Visão Geral
 
-## 🏗️ Arquitetura do Projeto
+Este projeto é um dashboard completo para análise de hábitos, evolução semanal e acompanhamento de metas pessoais. Os dados são armazenados e sincronizados em tempo real com o Firebase Firestore, permitindo visualização, análise e registro diário de hábitos e métricas de saúde.
 
-### Estrutura de Pastas
+O app é focado em produtividade, saúde e autoconhecimento, com interface moderna, responsiva e fácil de usar.
+
+---
+
+## Principais Funcionalidades
+
+- **Login seguro** com autenticação Firebase
+- **Registro diário** de hábitos e métricas (peso, meditação, exercícios, etc.)
+- **Dashboard visual** com gráficos, destaques e insights automáticos
+- **Análise semanal** de evolução e performance
+- **Resumo geral** com médias, tendências e destaques
+- **Dados 100% dinâmicos**: tudo vem do Firestore, sem dados estáticos
+
+---
+
+## Estrutura do Projeto
 
 ```
 src/
-├── components/           # Componentes React reutilizáveis
-│   ├── charts/          # Gráficos específicos
-│   ├── sections/        # Seções principais da análise
-│   └── ui/              # Componentes de interface básicos
-├── data/                # Dados e configurações
-├── utils/               # Funções utilitárias (futuro)
-└── App.jsx              # Componente principal
+│
+├── app.jsx                # Componente raiz, faz autenticação e roteamento
+├── Dashboard.jsx          # Dashboard principal, orquestra todas as seções
+│
+├── components/
+│   ├── auth/                  # Componentes de autenticação (login, header)
+│   ├── habitForms/            # Formulários (ex: adicionar dia)
+│   ├── dashboardSections/     # Seções do dashboard:
+│   │   ├── DashboardHeader.jsx         # Cabeçalho com nome do usuário e período analisado
+│   │   ├── ProgressOverviewSection.jsx # Gráficos de evolução geral (completude e peso)
+│   │   ├── HabitPerformanceSection.jsx # Performance detalhada de cada hábito individual
+│   │   ├── HabitInsightsSection.jsx    # Insights automáticos e destaques por hábito
+│   │   ├── WeeklyReviewSection.jsx     # Análise detalhada da última semana
+│   │   └── WeeklySummarySection.jsx    # Resumo geral com médias e destaques
+│   ├── visualizations/         # Gráficos customizados (ex: CompletionChart, WeightChart)
+│   └── commonUI/               # Componentes de UI reutilizáveis (ex: CollapsibleSection)
+│
+├── hooks/
+│   ├── useAuth.js              # Hook de autenticação
+│   └── useDashboardData.js     # Hook para buscar/processar dados do Firestore
+│
+├── firebase/
+│   ├── config.js               # Configuração do Firebase
+│   └── habitsService.js        # Serviços para ler/escrever dados no Firestore
+│
+├── data/
+│   ├── metricsCalculations.js  # Funções utilitárias para cálculos e métricas
+│   └── appConstants.js         # Constantes globais do app
+│
+├── utils/
+│   ├── dataFormatters.js       # (Reservado para helpers de formatação)
+│   └── generalHelpers.js       # (Reservado para helpers gerais)
+│
+├── index.css                   # Estilos globais
+└── main.jsx                    # Ponto de entrada do React
 ```
 
 ---
 
-## 📁 Detalhamento por Pasta
+## O que faz cada parte do app?
 
-### `components/charts/` - Gráficos Especializados
+### app.jsx
 
-#### `CompletionChart.jsx`
+Responsável por:
 
-- **O que faz:** Gráfico de linha da evolução da completude geral
-- **Recebe:** `data` (dados semanais), `metrics` (3 métricas calculadas)
-- **Exibe:** Linha temporal + cards com métricas
-- **Quando usar:** Para mostrar progresso geral ao longo do tempo
+- Inicializar o app
+- Gerenciar autenticação (login/logout)
+- Exibir o dashboard principal (`Dashboard.jsx`) apenas para usuários autenticados
 
-#### `WeightChart.jsx`
+### Dashboard.jsx
 
-- **O que faz:** Gráfico de linha da evolução do peso
-- **Recebe:** `data` (dados de peso), `weightTrend` (cálculo de redução)
-- **Exibe:** Linha temporal + card de redução total
-- **Quando usar:** Para acompanhar mudanças de peso
+- Componente central do dashboard
+- Busca todos os dados do Firestore via `useDashboardData`
+- Distribui os dados para as seções principais via props
+- Controla a expansão/colapso das seções e o formulário de registro diário
 
-#### `HabitChart.jsx`
+### Seções do Dashboard (components/dashboardSections)
 
-- **O que faz:** Gráfico de barras para UM hábito específico
-- **Recebe:** `habit` (dados do hábito), `metrics`, `classification`
-- **Exibe:** Barras semanais + métricas compactas
-- **Quando usar:** Para análise individual de cada hábito
+- **DashboardHeader.jsx**: Exibe o nome do usuário e o período analisado, servindo como cabeçalho do dashboard.
+- **ProgressOverviewSection.jsx**: Mostra gráficos de evolução geral, incluindo:
+  - Gráfico de completude semanal dos hábitos
+  - Gráfico de evolução do peso
+  - Métricas de tendência e progresso
+- **HabitPerformanceSection.jsx**: Exibe a performance detalhada de cada hábito individual, com gráficos e classificação de desempenho para cada hábito cadastrado.
+- **HabitInsightsSection.jsx**: Gera insights automáticos, incluindo:
+  - Médias gerais de completude
+  - Tendência de peso
+  - Destaques e classificações por hábito
+- **WeeklyReviewSection.jsx**: Faz uma análise detalhada da última semana registrada, mostrando:
+  - Comparação com a média geral
+  - Destaques, sucessos, desafios e recomendações
+  - Evolução e padrões identificados
+- **WeeklySummarySection.jsx**: Apresenta um resumo geral com as principais métricas, médias e destaques da última semana.
 
----
+### Outros diretórios importantes
 
-### `components/sections/` - Seções Principais
-
-#### `Header.jsx`
-
-- **O que faz:** Cabeçalho da aplicação
-- **Exibe:** Título, nome do usuário, período analisado
-- **Dados:** Importa de `analysisInfo`
-
-#### `EvolutionSection.jsx`
-
-- **O que faz:** Seção 1 - Evolução geral (completude + peso)
-- **Contém:** `CompletionChart` + `WeightChart`
-- **Responsabilidade:** Visão macro do progresso
-
-#### `HabitsSection.jsx`
-
-- **O que faz:** Seção 2 - Performance individual dos hábitos
-- **Contém:** Loop de `HabitChart` para cada hábito
-- **Responsabilidade:** Análise detalhada por hábito
-
-#### `InsightsSection.jsx`
-
-- **O que faz:** Seção 3 - Insights e análises automáticas
-- **Contém:** 3 `InsightsCard` com análises calculadas
-- **Responsabilidade:** Interpretação inteligente dos dados
-
-#### `WeekAnalysisSection.jsx`
-
-- **O que faz:** Seção 4 - Análise específica da última semana
-- **Contém:** Cards com performance detalhada + recomendações
-- **Responsabilidade:** Foco na semana mais recente
-
-#### `Summary.jsx`
-
-- **O que faz:** Resumo final com métricas principais
-- **Exibe:** Overview geral + destaque da última semana
-- **Responsabilidade:** Conclusão do relatório
+- **components/habitForms/**: Formulários para registro diário de hábitos.
+- **components/visualizations/**: Gráficos customizados usados nas seções.
+- **components/commonUI/**: Componentes de interface reutilizáveis (ex: seções colapsáveis, cards de insights).
+- **hooks/**: Hooks customizados para autenticação e carregamento/processamento de dados.
+- **firebase/**: Integração com o Firestore e serviços de autenticação.
+- **data/**: Funções utilitárias para cálculos de métricas e constantes globais.
+- **utils/**: Helpers e utilitários gerais.
 
 ---
 
-### `components/ui/` - Componentes Base
+## Fluxo de Dados
 
-#### `CollapsibleSection.jsx`
-
-- **O que faz:** Seção que abre/fecha com clique
-- **Props:** `title`, `icon`, `iconColor`, `isExpanded`, `onToggle`, `children`
-- **Quando usar:** Para todas as seções principais
-- **Benefício:** Consistência visual + interatividade
-
-#### `MetricsCard.jsx`
-
-- **O que faz:** Exibe as 3 métricas padronizadas
-- **Props:** `metrics` (objeto com avgGeneral, percentActive, avgActive)
-- **Variações:** `MetricsCard` (completo) e `CompactMetricsCard` (lateral)
-- **Quando usar:** Sempre que precisar mostrar métricas
-
-#### `InsightsCard.jsx`
-
-- **O que faz:** Card colorido para insights e análises
-- **Props:** `title`, `variant` (cor), `icon`, `children`
-- **Variantes:** blue, orange, green, yellow, purple, red
-- **Quando usar:** Para destacar informações importantes
+- O usuário faz login (Firebase Auth)
+- O app carrega os dados do Firestore via `useDashboardData`
+- O dashboard (`Dashboard.jsx`) distribui os dados para as seções via props
+- Cada seção (ProgressOverview, HabitPerformance, HabitInsights, etc.) exibe gráficos, métricas e destaques
+- O usuário pode registrar novos dias pelo formulário, que salva direto no Firestore
 
 ---
 
-### `data/` - Dados e Lógica
+## Tecnologias Utilizadas
 
-#### `habitData.js`
-
-- **O que contém:** Todos os dados brutos dos hábitos
-- **Exports:**
-  - `weeklyCompletionData` - Dados de completude geral
-  - `weightData` - Dados de peso
-  - `habitDataByType` - Dados individuais por hábito
-  - `habitsList` - Lista ordenada dos hábitos
-  - `analysisInfo` - Informações do período
-
-#### `calculations.js`
-
-- **O que contém:** Funções para calcular métricas
-- **Funções principais:**
-  - `calculateMetrics()` - Calcula as 3 métricas base
-  - `calculateCompletionMetrics()` - Métricas de completude
-  - `calculateHabitMetrics()` - Métricas de um hábito
-  - `getHabitClassification()` - Classifica performance (😞 a 🤩)
-  - `getWeightTrend()` - Calcula tendência de peso
-
-#### `constants.js`
-
-- **O que contém:** Configurações e constantes do projeto
-- **Inclui:**
-  - `EVALUATION_SCALES` - Escalas de avaliação
-  - `COLORS` - Paleta de cores
-  - `CHART_CONFIG` - Configurações de gráficos
-  - `MESSAGES` - Mensagens padrão
-  - `THRESHOLDS` - Limites importantes
+- **React** (com hooks)
+- **Firebase** (Firestore + Auth)
+- **Vite** (dev server)
+- **Tailwind CSS** (estilização)
+- **Lucide Icons** (ícones modernos)
 
 ---
 
-## 🔄 Fluxo de Dados
+## Como rodar o projeto
 
-```
-1. App.jsx (coordena tudo)
-   ↓
-2. Seções recebem props de estado
-   ↓
-3. Seções importam dados de data/
-   ↓
-4. Seções calculam métricas com calculations.js
-   ↓
-5. Seções passam dados para Charts e UI components
-   ↓
-6. Componentes renderizam interface final
-```
+1. Instale as dependências:
+   ```bash
+   npm install
+   ```
+2. Configure o Firebase em `src/firebase/config.js` com suas credenciais.
+3. Rode o app:
+   ```bash
+   npm run dev
+   ```
+4. Acesse em [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🎯 Como Usar/Modificar
+## Observações
 
-### Adicionar Nova Semana de Dados
-
-1. Abra `data/habitData.js`
-2. Adicione nova entrada em `weeklyCompletionData`
-3. Adicione peso em `weightData` (se disponível)
-4. Atualize dados em cada hábito dentro de `habitDataByType`
-
-### Adicionar Novo Hábito
-
-1. Em `habitData.js`, adicione entrada em `habitDataByType`
-2. Adicione nome do hábito em `habitsList`
-3. Defina cor e borderColor para o novo hábito
-4. O resto é automático! 🎉
-
-### Modificar Cores/Estilos
-
-1. Ajuste cores em `data/constants.js`
-2. Modificar escalas de avaliação também em `constants.js`
-3. Estilos específicos nos componentes individuais
-
-### Adicionar Nova Seção
-
-1. Crie arquivo em `components/sections/`
-2. Importe em `App.jsx`
-3. Adicione estado para expandir/colapsar
-4. Use `CollapsibleSection` como wrapper
+- Todos os dados são dinâmicos e vêm do Firestore.
+- Não há mais dependência de arquivos de dados estáticos.
+- O projeto está modularizado e pronto para expansão.
 
 ---
 
-## 📊 As 3 Métricas Principais
-
-Cada hábito é avaliado por 3 métricas:
-
-1. **Média Geral:** % média de completude considerando TODAS as semanas
-2. **% Semanas Ativas:** % de semanas onde o hábito teve completude > 0%
-3. **Média Ativas:** % média APENAS das semanas onde o hábito foi ativo
-
-### Por que 3 métricas?
-
-- **Média Geral:** Mostra performance real total
-- **% Ativas:** Mostra consistência/frequência
-- **Média Ativas:** Mostra intensidade quando engajado
-
-**Exemplo:**
-
-- Hábito com 50% geral, 70% ativas, 71% quando ativo = "Faço pouco, mas quando faço, faço bem"
-- Hábito com 80% geral, 90% ativas, 89% quando ativo = "Faço quase sempre e bem"
-
----
-
-## 🚀 Benefícios da Arquitetura
-
-### ✅ Modularidade
-
-- Cada componente tem uma responsabilidade específica
-- Fácil de testar e manter
-
-### ✅ Reutilização
-
-- `InsightsCard` usado em várias seções
-- `HabitChart` renderiza qualquer hábito
-- `CollapsibleSection` padrão para todas as seções
-
-### ✅ Escalabilidade
-
-- Adicionar novos hábitos: automático
-- Adicionar novas seções: padronizado
-- Modificar estilos: centralizado
-
-### ✅ Manutenção
-
-- Código organizado e documentado
-- Alterações isoladas por responsabilidade
-- Fácil debug e evolução
-
----
-
-## 🔧 Tecnologias
-
-- **React** - Interface
-- **Recharts** - Gráficos
-- **Lucide React** - Ícones
-- **Tailwind CSS** - Estilos
-- **Vite** - Build tool
-
----
-
-## 📈 Próximas Evoluções
-
-### Possíveis melhorias:
-
-- [ ] Adicionar pasta `utils/` com formatadores
-- [ ] Sistema de metas por hábito
-- [ ] Comparação entre períodos
-- [ ] Export para PDF/Excel
-- [ ] Análise de correlações
-- [ ] Dashboard responsivo para mobile
-
----
-
-_Criado com ❤️ para acompanhar a evolução dos hábitos do Paulo_
+Se quiser personalizar ou adicionar mais detalhes, me avise! Posso adaptar para o seu estilo ou incluir instruções específicas.

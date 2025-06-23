@@ -11,10 +11,11 @@
     "start": "vite"
   },
   "dependencies": {
+    "firebase": "^11.9.1",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "recharts": "^2.8.0",
-    "lucide-react": "^0.294.0"
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
@@ -25,7 +26,11 @@
     "tailwindcss": "^3.3.6",
     "vite": "^5.0.8"
   },
-  "keywords": ["react", "habits", "analysis"],
+  "keywords": [
+    "react",
+    "habits",
+    "analysis"
+  ],
   "author": "Paulo",
   "license": "MIT"
-} 
+}

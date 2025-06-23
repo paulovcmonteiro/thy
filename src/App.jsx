@@ -1,57 +1,37 @@
-import React, { useState } from 'react';
+// src/App.jsx (CÓDIGO COMPLETO E LIMPO)
+import React from 'react';
+import useAuth from './hooks/useAuth';
+import LoginForm from './components/auth/LoginForm';
+import AuthHeader from './components/auth/AuthHeader';
+import Dashboard from './Dashboard';
+import DashboardHeader from './components/dashboardSections/DashboardHeader.jsx';
 
-// Importando todas as seções
-import Header from './components/sections/Header.jsx';
-import EvolutionSection from './components/sections/EvolutionSection.jsx';
-import HabitsSection from './components/sections/HabitsSection.jsx';
-import InsightsSection from './components/sections/InsightsSection.jsx';
-import WeekAnalysisSection from './components/sections/WeekAnalysisSection.jsx';
-import Summary from './components/sections/Summary.jsx';
+const App = () => {
+  const { user, loading } = useAuth();
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
-const PauloHabitAnalysis = () => {
-  const [expandedSections, setExpandedSections] = useState({
-    section1: true,
-    section2: true,
-    section3: true,
-    section4: true
-  });
+  // Se não estiver logado, mostrar login
+  if (!user) {
+    return <LoginForm />;
+  }
 
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
+  // Se estiver logado, mostrar app principal
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
-      
-      <Header />
-
-      <EvolutionSection
-        isExpanded={expandedSections.section1}
-        onToggle={() => toggleSection('section1')}
-      />
-
-      <HabitsSection
-        isExpanded={expandedSections.section2}
-        onToggle={() => toggleSection('section2')}
-      />
-
-      <InsightsSection
-        isExpanded={expandedSections.section3}
-        onToggle={() => toggleSection('section3')}
-      />
-
-      <WeekAnalysisSection
-        isExpanded={expandedSections.section4}
-        onToggle={() => toggleSection('section4')}
-      />
-
-      <Summary />
-      
+    <div className="min-h-screen bg-gray-50">
+      <AuthHeader />
+      <Dashboard />
     </div>
   );
 };
 
-export default PauloHabitAnalysis;
+export default App;
