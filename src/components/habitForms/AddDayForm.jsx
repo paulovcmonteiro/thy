@@ -1,18 +1,44 @@
-// components/forms/AddDayForm.jsx - FORMULÁRIO DIÁRIO SIMPLES
-import React, { useState } from 'react';
-import { X, Calendar, Save } from 'lucide-react';
+// components/forms/AddDayForm.jsx - FORMULÁRIO COM AUTO-SAVE
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Calendar, Save, Check, AlertCircle, Clock } from 'lucide-react';
 import useDashboardData from '../../hooks/useDashboardData';
+import { getDayHabits } from '../../firebase/habitsService';
 
 const AddDayForm = ({ isOpen, onClose }) => {
   const { addNewDay, refreshData } = useDashboardData();
 
-  // Data de hoje por padrão
+  // 🆕 FUNÇÃO: RECUPERAR ÚLTIMA DATA USADA
+  const getInitialDate = () => {
+    try {
+      const savedDate = localStorage.getItem('habitTracker_lastUsedDate');
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (savedDate) {
+        // Verificar se a data salva é válida e não é futura
+        const savedDateObj = new Date(savedDate);
+        const todayObj = new Date(today);
+        
+        if (!isNaN(savedDateObj.getTime()) && savedDateObj <= todayObj) {
+          console.log('📅 [AddDayForm] Recuperando última data usada:', savedDate);
+          return savedDate;
+        }
+      }
+      
+      console.log('📅 [AddDayForm] Usando data de hoje:', today);
+      return today;
+    } catch (error) {
+      console.warn('⚠️ [AddDayForm] Erro ao recuperar última data, usando hoje');
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
   const today = new Date().toISOString().split('T')[0]; // "2025-06-22"
   const todayFormatted = new Date().toLocaleDateString('pt-BR'); // "22/06/2025"
+  const initialDate = getInitialDate(); // Data inicial (última usada ou hoje)
 
   // Estado do formulário
   const [formData, setFormData] = useState({
-    date: today,
+    date: initialDate,
     peso: '',
     meditar: false,
     medicar: false,
@@ -28,6 +54,11 @@ const AddDayForm = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
 
+  // 🆕 ESTADOS PARA AUTO-SAVE
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
+  const [hasLoadedExistingData, setHasLoadedExistingData] = useState(false);
+
   // Novo estado para controlar o passo do formulário mobile
   const [step, setStep] = useState(1);
 
@@ -42,12 +73,149 @@ const AddDayForm = ({ isOpen, onClose }) => {
     { key: 'descansar', label: '😴 Descansar', description: 'Descanso adequado' }
   ];
 
-  // Handle mudanças no formulário
+  // 🆕 FUNÇÃO: SALVAR DATA NO LOCALSTORAGE
+  const saveLastUsedDate = (dateISO) => {
+    try {
+      localStorage.setItem('habitTracker_lastUsedDate', dateISO);
+      console.log('💾 [AddDayForm] Data salva no localStorage:', dateISO);
+    } catch (error) {
+      console.warn('⚠️ [AddDayForm] Erro ao salvar data no localStorage:', error);
+    }
+  };
+
+  // 🆕 FUNÇÃO: CARREGAR DADOS EXISTENTES DO DIA
+  const loadExistingDay = useCallback(async (dateISO) => {
+    try {
+      console.log('🔄 [AddDayForm] Carregando dados existentes para:', dateISO);
+      
+      const result = await getDayHabits(dateISO);
+      
+      if (result.success && result.data) {
+        const existingData = result.data;
+        console.log('✅ [AddDayForm] Dados encontrados:', existingData);
+        
+        // Carregar dados no formulário
+        setFormData({
+          date: dateISO,
+          peso: existingData.peso ? existingData.peso.toString() : '',
+          meditar: existingData.meditar || false,
+          medicar: existingData.medicar || false,
+          exercitar: existingData.exercitar || false,
+          comunicar: existingData.comunicar || false,
+          alimentar: existingData.alimentar || false,
+          estudar: existingData.estudar || false,
+          descansar: existingData.descansar || false,
+          obs: existingData.obs || ''
+        });
+        
+        setSaveStatus('saved');
+        setHasLoadedExistingData(true);
+        console.log('✅ [AddDayForm] Dados carregados no formulário');
+        
+      } else {
+        console.log('ℹ️ [AddDayForm] Nenhum dado encontrado para', dateISO, '- novo dia');
+        setHasLoadedExistingData(true);
+        setSaveStatus('idle');
+      }
+      
+    } catch (error) {
+      console.error('❌ [AddDayForm] Erro ao carregar dados existentes:', error);
+      setHasLoadedExistingData(true);
+      setSaveStatus('idle');
+    }
+  }, []);
+
+  // 🆕 FUNÇÃO: AUTO-SAVE COM DEBOUNCE
+  const performAutoSave = useCallback(async (dataToSave) => {
+    try {
+      setSaveStatus('saving');
+      console.log('💾 [AddDayForm] Auto-salvando...', dataToSave.date);
+
+      const result = await addNewDay(dataToSave);
+      
+      if (result.success) {
+        setSaveStatus('saved');
+        console.log('✅ [AddDayForm] Auto-save realizado com sucesso');
+        
+        // Limpar indicador de "saved" após 2 segundos
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 2000);
+        
+      } else {
+        setSaveStatus('error');
+        console.error('❌ [AddDayForm] Erro no auto-save:', result.error);
+        
+        // Limpar status de erro após 3 segundos
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 3000);
+      }
+
+    } catch (error) {
+      setSaveStatus('error');
+      console.error('❌ [AddDayForm] Erro inesperado no auto-save:', error);
+      
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 3000);
+    }
+  }, [addNewDay]);
+
+  // 🆕 FUNÇÃO: TRIGGER AUTO-SAVE COM DEBOUNCE
+  const triggerAutoSave = useCallback((newFormData) => {
+    // Só auto-salvar se já carregou dados existentes (evita salvar antes de carregar)
+    if (!hasLoadedExistingData) {
+      return;
+    }
+
+    // Validações básicas para auto-save
+    if (!newFormData.date) {
+      return;
+    }
+
+    // Limpar timeout anterior
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+
+    // Agendar novo auto-save com debounce de 1.5 segundos
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ [AddDayForm] Trigger auto-save após debounce');
+      
+      // Preparar dados para auto-save
+      const autoSaveData = {
+        date: newFormData.date,
+        peso: newFormData.peso ? Number(newFormData.peso) : null,
+        meditar: Boolean(newFormData.meditar),
+        medicar: Boolean(newFormData.medicar),
+        exercitar: Boolean(newFormData.exercitar),
+        comunicar: Boolean(newFormData.comunicar),
+        alimentar: Boolean(newFormData.alimentar),
+        estudar: Boolean(newFormData.estudar),
+        descansar: Boolean(newFormData.descansar),
+        obs: newFormData.obs || ''
+      };
+
+      performAutoSave(autoSaveData);
+    }, 1500); // 1.5 segundos de debounce
+
+    setAutoSaveTimeout(timeoutId);
+  }, [autoSaveTimeout, hasLoadedExistingData, performAutoSave]);
+
+  // Handle mudanças no formulário COM AUTO-SAVE
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
+    
+    setFormData(newFormData);
+    
+    // 🆕 SALVAR DATA NO LOCALSTORAGE QUANDO MUDAR
+    if (field === 'date') {
+      saveLastUsedDate(value);
+    }
     
     // Limpar erro do campo
     if (errors[field]) {
@@ -56,21 +224,57 @@ const AddDayForm = ({ isOpen, onClose }) => {
         [field]: undefined
       }));
     }
+
+    // 🆕 TRIGGER AUTO-SAVE
+    triggerAutoSave(newFormData);
   };
 
-  // Handle toggle de hábitos
+  // Handle toggle de hábitos COM AUTO-SAVE
   const handleHabitToggle = (habitKey) => {
-    setFormData(prev => ({
-      ...prev,
-      [habitKey]: !prev[habitKey]
-    }));
+    const newFormData = {
+      ...formData,
+      [habitKey]: !formData[habitKey]
+    };
+    
+    setFormData(newFormData);
+
+    // 🆕 TRIGGER AUTO-SAVE
+    triggerAutoSave(newFormData);
   };
 
-  // Validações mais rigorosas (seguindo padrão do AddWeekForm)
+  // 🆕 CARREGAR DADOS QUANDO DATA MUDAR
+  useEffect(() => {
+    if (isOpen && formData.date) {
+      setHasLoadedExistingData(false);
+      setSaveStatus('idle');
+      loadExistingDay(formData.date);
+    }
+  }, [formData.date, isOpen, loadExistingDay]);
+
+  // 🆕 CARREGAR DADOS INICIAIS QUANDO ABRIR MODAL
+  useEffect(() => {
+    if (isOpen) {
+      setHasLoadedExistingData(false);
+      setSaveStatus('idle');
+      const dateToLoad = getInitialDate(); // Usar última data salva
+      setFormData(prev => ({ ...prev, date: dateToLoad })); // Atualizar estado se necessário
+      loadExistingDay(dateToLoad);
+    }
+  }, [isOpen, loadExistingDay]);
+
+  // 🆕 LIMPAR TIMEOUT AO DESMONTAR
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+    };
+  }, [autoSaveTimeout]);
+
+  // Validações mais rigorosas (mantidas iguais)
   const validateForm = () => {
     const newErrors = {};
 
-    // Validar data obrigatória (formato ISO: YYYY-MM-DD)
     if (!formData.date) {
       newErrors.date = 'Data é obrigatória';
     } else {
@@ -78,22 +282,19 @@ const AddDayForm = ({ isOpen, onClose }) => {
       if (!dateRegex.test(formData.date)) {
         newErrors.date = 'Formato de data inválido';
       } else {
-        // Verificar se é uma data válida
         const date = new Date(formData.date);
         if (isNaN(date.getTime())) {
           newErrors.date = 'Data inválida';
         }
         
-        // Verificar se não é uma data futura
         const today = new Date();
-        today.setHours(23, 59, 59, 999); // Até o final do dia de hoje
+        today.setHours(23, 59, 59, 999);
         if (date > today) {
           newErrors.date = 'Não é possível registrar dias futuros';
         }
       }
     }
 
-    // Validar peso (seguindo mesmo padrão do AddWeekForm)
     if (formData.peso && (isNaN(formData.peso) || formData.peso < 0 || formData.peso > 200)) {
       newErrors.peso = 'Peso deve ser um número válido entre 0 e 200kg';
     }
@@ -102,7 +303,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle submit
+  // 🔄 MODIFICADO: Handle submit manual (quando usuário clica "Salvar")
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -110,14 +311,18 @@ const AddDayForm = ({ isOpen, onClose }) => {
       return;
     }
 
+    // Cancelar auto-save pendente
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+
     setLoading(true);
     setSuccessMessage('');
     setErrors({});
 
     try {
-      // Preparar dados para envio (seguindo padrão)
       const submitData = {
-        date: formData.date, // YYYY-MM-DD (ISO format)
+        date: formData.date,
         peso: formData.peso ? Number(formData.peso) : null,
         meditar: Boolean(formData.meditar),
         medicar: Boolean(formData.medicar),
@@ -129,39 +334,26 @@ const AddDayForm = ({ isOpen, onClose }) => {
         obs: formData.obs || ''
       };
 
-      // Chamar função do hook
       const result = await addNewDay(submitData);
       
       if (result.success) {
         setSuccessMessage('✅ Dia salvo com sucesso! Semana recalculada automaticamente 🎉');
+        setSaveStatus('saved');
         
-        // Limpar formulário (resetar para hoje)
-        const newToday = new Date().toISOString().split('T')[0];
-        setFormData({
-          date: newToday,
-          peso: '',
-          meditar: false,
-          medicar: false,
-          exercitar: false,
-          comunicar: false,
-          alimentar: false,
-          estudar: false,
-          descansar: false,
-          obs: ''
-        });
-
-        // Fechar modal após 3 segundos
+        // Fechar modal após 2 segundos
         setTimeout(() => {
           onClose();
           setSuccessMessage('');
-        }, 3000);
+        }, 2000);
 
       } else {
         setErrors({ submit: result.error || 'Erro ao salvar dia' });
+        setSaveStatus('error');
       }
 
     } catch (error) {
       setErrors({ submit: 'Erro inesperado. Tente novamente.' });
+      setSaveStatus('error');
     } finally {
       setLoading(false);
     }
@@ -170,8 +362,13 @@ const AddDayForm = ({ isOpen, onClose }) => {
   // Reset ao fechar
   const handleClose = () => {
     if (!loading) {
+      // Cancelar auto-save pendente
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+      
       setFormData({
-        date: today,
+        date: getInitialDate(), // 🆕 Usar última data salva em vez de hoje
         peso: '',
         meditar: false,
         medicar: false,
@@ -184,8 +381,43 @@ const AddDayForm = ({ isOpen, onClose }) => {
       });
       setErrors({});
       setSuccessMessage('');
+      setSaveStatus('idle');
+      setHasLoadedExistingData(false);
       onClose();
     }
+  };
+
+  // 🆕 COMPONENTE: INDICADOR DE STATUS DE SALVAMENTO
+  const SaveStatusIndicator = () => {
+    const statusConfig = {
+      idle: { icon: null, text: '', color: '' },
+      saving: { 
+        icon: <Clock size={16} className="animate-spin" />, 
+        text: 'Salvando...', 
+        color: 'text-blue-600' 
+      },
+      saved: { 
+        icon: <Check size={16} />, 
+        text: 'Salvo automaticamente', 
+        color: 'text-green-600' 
+      },
+      error: { 
+        icon: <AlertCircle size={16} />, 
+        text: 'Erro ao salvar', 
+        color: 'text-red-600' 
+      }
+    };
+
+    const config = statusConfig[saveStatus];
+    
+    if (saveStatus === 'idle') return null;
+
+    return (
+      <div className={`flex items-center gap-2 text-sm ${config.color} bg-white px-3 py-1 rounded-full shadow-sm border`}>
+        {config.icon}
+        <span>{config.text}</span>
+      </div>
+    );
   };
 
   // Contar hábitos marcados
@@ -210,8 +442,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-white flex items-center justify-center z-50 p-0 sm:p-4">
       {/* MOBILE/TABLET: FLUXO EM 2 TELAS */}
       <div className="w-full h-full max-w-md mx-auto flex flex-col justify-between p-0 sm:max-w-lg md:max-w-xl lg:hidden relative bg-white">
-        {/* Header fixo com X */}
-        <div className="w-full flex items-center justify-end px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10" style={{ minHeight: 56 }}>
+        {/* Header fixo com X e indicador de status */}
+        <div className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10" style={{ minHeight: 56 }}>
+          <SaveStatusIndicator />
           <button
             onClick={handleCloseAndReset}
             disabled={loading}
@@ -221,6 +454,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
             <X size={32} />
           </button>
         </div>
+        
         {step === 1 && (
           <>
             {/* Conteúdo principal com scroll se necessário */}
@@ -282,6 +516,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
             </div>
           </>
         )}
+        
         {step === 2 && (
           <>
             <div className="flex flex-col justify-between h-full w-full">
@@ -310,7 +545,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
                 ) : (
                   <>
                     <Save size={28} />
-                    Salvar
+                    Finalizar Dia
                   </>
                 )}
               </button>
@@ -328,19 +563,24 @@ const AddDayForm = ({ isOpen, onClose }) => {
           </>
         )}
       </div>
+      
       {/* DESKTOP: TUDO EM UMA TELA SÓ */}
       <div className="hidden lg:flex items-center justify-center fixed inset-0 z-50 bg-black bg-opacity-10">
         <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-0 relative flex flex-col" style={{ maxHeight: '90vh', minWidth: '520px' }}>
-          {/* Botão de fechar no topo direito */}
-          <button
-            onClick={handleCloseAndReset}
-            disabled={loading}
-            className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 text-3xl z-20"
-          >
-            <X size={32} />
-          </button>
+          {/* Header com status e botão fechar */}
+          <div className="flex items-center justify-between px-10 pt-6">
+            <SaveStatusIndicator />
+            <button
+              onClick={handleCloseAndReset}
+              disabled={loading}
+              className="text-gray-400 hover:text-gray-700 text-3xl z-20"
+            >
+              <X size={32} />
+            </button>
+          </div>
+          
           {/* Conteúdo rolável */}
-          <div className="flex-1 overflow-y-auto px-10 pt-10 pb-32">
+          <div className="flex-1 overflow-y-auto px-10 pt-4 pb-32">
             <form onSubmit={handleFinalSubmit} className="flex flex-col gap-8">
               <input
                 type="date"
@@ -392,7 +632,8 @@ const AddDayForm = ({ isOpen, onClose }) => {
               />
             </form>
           </div>
-          {/* Botão Salvar fixo na base */}
+          
+          {/* Botão Finalizar Dia fixo na base */}
           <div className="w-full px-10 pb-8 pt-4 bg-white sticky bottom-0 left-0 z-30 border-t border-gray-100">
             <button
               type="button"
@@ -406,13 +647,20 @@ const AddDayForm = ({ isOpen, onClose }) => {
               ) : (
                 <>
                   <Save size={28} />
-                  Salvar
+                  Finalizar Dia
                 </>
               )}
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Mensagem de sucesso (se houver) */}
+      {successMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded-lg shadow-lg z-50">
+          {successMessage}
+        </div>
+      )}
     </div>
   );
 };
