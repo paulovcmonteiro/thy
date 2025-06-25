@@ -1,124 +1,155 @@
+// src/components/dashboardSections/WeeklyReviewSection.jsx - VERSÃO SEGURA
 import React from 'react';
-import { CheckCircle } from 'lucide-react';
+import { Calendar, TrendingUp } from 'lucide-react';
 
-// Importando dados para cálculos dinâmicos
-import { calculateCompletionMetrics } from '../../data/metricsCalculations.js';
-
-// Componentes
-import CollapsibleSection from '../commonUI/CollapsibleSection.jsx';
-import InsightsCard from '../commonUI/InsightsCard.jsx';
-
-const WeeklyReviewSection = ({ isExpanded, onToggle, weeklyCompletionData }) => {
-  // Cálculos para a análise da semana
-  const completionMetrics = calculateCompletionMetrics(weeklyCompletionData);
+const WeeklyReviewSection = ({ data, isExpanded, onToggle }) => {
   
-  // Dados da última semana (08/06)
+  // VERIFICAÇÕES DE SEGURANÇA
+  if (!data || !data.weeklyCompletionData) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div className="text-center text-gray-500">
+          <Calendar className="w-8 h-8 mx-auto mb-2" />
+          <p>Dados semanais não disponíveis</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { weeklyCompletionData } = data;
+
+  if (!weeklyCompletionData || weeklyCompletionData.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div className="text-center text-gray-500">
+          <Calendar className="w-8 h-8 mx-auto mb-2" />
+          <p>Nenhuma semana registrada ainda</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dados da última semana
   const lastWeek = weeklyCompletionData[weeklyCompletionData.length - 1];
-  const lastWeekCompletion = lastWeek?.completude || 0;
+  const previousWeek = weeklyCompletionData.length > 1 ? weeklyCompletionData[weeklyCompletionData.length - 2] : null;
   
-  // Diferença vs média geral
-  const differenceFromAverage = (lastWeekCompletion - completionMetrics.avgGeneral).toFixed(1);
-  
-  // Encontrar melhor semana para comparação
-  const bestWeek = weeklyCompletionData.reduce((best, current) => 
-    current.completude > best.completude ? current : best
-  );
+  // Média geral (excluindo a última semana)
+  const otherWeeks = weeklyCompletionData.slice(0, -1);
+  const avgGeneral = otherWeeks.length > 0 
+    ? otherWeeks.reduce((sum, week) => sum + (week.completude || 0), 0) / otherWeeks.length 
+    : 0;
+
+  // Comparação com semana anterior
+  const weekComparison = previousWeek 
+    ? (lastWeek.completude || 0) - (previousWeek.completude || 0)
+    : 0;
+
+  // Seção colapsível
+  const toggleSection = () => {
+    if (onToggle) onToggle();
+  };
 
   return (
-    <CollapsibleSection
-      title="4. Análise da Semana 08/06"
-      icon={CheckCircle}
-      iconColor="text-green-600"
-      isExpanded={isExpanded}
-      onToggle={onToggle}
-    >
-      <div className="grid gap-6">
-        
-        {/* Card Principal de Destaque */}
-        <InsightsCard 
-          title="DESTAQUE: Semana 08/06 - Sua Melhor Performance!" 
-          variant="green" 
-          icon="🎯"
-        >
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            {/* Números da Semana */}
-            <div className="bg-green-100 p-4 rounded-lg">
-              <h4 className="font-semibold text-green-800 mb-2">📊 Números da Semana</h4>
-              <div className="text-green-700 space-y-1 text-sm">
-                <p>
-                  <strong>Completude:</strong> {lastWeekCompletion}% - 
-                  {lastWeekCompletion === bestWeek.completude ? 
-                    ' Sua melhor semana de todos os tempos!' : 
-                    ` Sua ${lastWeekCompletion >= 65 ? '2ª' : ''} melhor semana!`
-                  }
-                </p>
-                <p><strong>Peso:</strong> 82.1kg - Voltou ao menor peso já registrado</p>
-                <p><strong>Hábitos ativos:</strong> 7/7 - Primeira vez com 100% dos hábitos ativos!</p>
-                <p><strong>Streak:</strong> 4ª semana consecutiva produtiva (desde 18/05)</p>
-              </div>
-            </div>
-            
-            {/* Comparação com Histórico */}
-            <div className="bg-blue-100 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">📈 Comparação com Histórico</h4>
-              <div className="text-blue-700 space-y-1 text-sm">
-                <p>
-                  <strong>Vs Média Geral:</strong> 
-                  {differenceFromAverage > 0 ? `+${differenceFromAverage}` : differenceFromAverage} pontos 
-                  {differenceFromAverage > 0 ? 'acima' : 'abaixo'} da média!
-                </p>
-                <p><strong>Vs Maio:</strong> Manteve o nível alto (maio: 52% média)</p>
-                <p>
-                  <strong>Ranking:</strong> 
-                  {lastWeekCompletion === bestWeek.completude ? 
-                    ' 1º lugar - recorde!' : 
-                    ` 2º lugar (atrás apenas dos ${bestWeek.completude}% de ${bestWeek.semana})`
-                  }
-                </p>
-                <p><strong>Tendência:</strong> 4 semanas em linha ascendente</p>
-              </div>
-            </div>
+    <div className="bg-white rounded-lg shadow-lg mb-8">
+      {/* Header clicável */}
+      <div 
+        className="p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={toggleSection}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+            <Calendar className="text-[#4682B4]" />
+            4. Análise da Última Semana
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">
+              {lastWeek.semana}
+            </span>
+            <TrendingUp 
+              className={`w-5 h-5 text-gray-400 transform transition-transform ${
+                isExpanded ? 'rotate-180' : ''
+              }`} 
+            />
           </div>
-        </InsightsCard>
-
-        {/* Análise das Observações */}
-        <InsightsCard title="Análise das Suas Observações" variant="yellow" icon="🔍">
-          <div className="space-y-2 text-sm">
-            <p>
-              <strong>✅ Sucessos:</strong> Descoberta do sono (dormir antes 23h = semanas 60-70%), 
-              hábitos naturais, evolução curso
-            </p>
-            <p>
-              <strong>⚠️ Desafios:</strong> Tênis 22h sabota sono otimizado, stress quinta-feira, 
-              temperatura sono
-            </p>
-            <p>
-              <strong>🎯 Recomendações:</strong> Começar tênis 19h, ritual anti-stress quinta, 
-              meta 80% alcançável!
-            </p>
-          </div>
-        </InsightsCard>
-
-        {/* Insights Adicionais */}
-        <InsightsCard title="Insights da Evolução" variant="purple" icon="💡">
-          <div className="space-y-2 text-sm">
-            <p>
-              <strong>🔍 Padrão identificado:</strong> Semanas com sono otimizado (dormir antes 23h) 
-              consistentemente geram 60-70% de completude.
-            </p>
-            <p>
-              <strong>📈 Progresso notável:</strong> De 0% em março para 70% em junho - 
-              uma recuperação impressionante!
-            </p>
-            <p>
-              <strong>🎯 Próximo objetivo:</strong> Com a fórmula do sono descoberta, 
-              80% de completude está ao seu alcance nas próximas semanas.
-            </p>
-          </div>
-        </InsightsCard>
-
+        </div>
       </div>
-    </CollapsibleSection>
+
+      {/* Conteúdo colapsível */}
+      {isExpanded && (
+        <div className="p-6">
+          <div className="grid gap-4">
+            
+            {/* Completude da última semana */}
+            <div className="bg-blue-50 border-l-4 border-[#4682B4] p-4 rounded-r-lg">
+              <h3 className="font-semibold text-[#4682B4] mb-2">
+                📊 Completude da Semana ({lastWeek.semana})
+              </h3>
+              <p className="text-blue-600">
+                <strong>{(lastWeek.completude || 0).toFixed(1)}%</strong> de completude na última semana.
+                {avgGeneral > 0 && (
+                  <>
+                    {' '}Comparado com sua média geral de <strong>{avgGeneral.toFixed(1)}%</strong>,
+                    {(lastWeek.completude || 0) > avgGeneral ? (
+                      <span className="text-green-600"> está <strong>acima da média</strong> 📈</span>
+                    ) : (
+                      <span className="text-orange-600"> está <strong>abaixo da média</strong> 📉</span>
+                    )}
+                  </>
+                )}
+              </p>
+            </div>
+
+            {/* Comparação com semana anterior */}
+            {previousWeek && (
+              <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                <h3 className="font-semibold text-green-700 mb-2">
+                  📈 Evolução Semanal
+                </h3>
+                <p className="text-green-600">
+                  {weekComparison > 0 ? (
+                    <>
+                      <strong>Melhoria de {weekComparison.toFixed(1)} pontos</strong> comparado à semana anterior 
+                      ({(previousWeek.completude || 0).toFixed(1)}% → {(lastWeek.completude || 0).toFixed(1)}%). 
+                      Continue assim! 🎉
+                    </>
+                  ) : weekComparison < 0 ? (
+                    <>
+                      <strong>Queda de {Math.abs(weekComparison).toFixed(1)} pontos</strong> comparado à semana anterior 
+                      ({(previousWeek.completude || 0).toFixed(1)}% → {(lastWeek.completude || 0).toFixed(1)}%). 
+                      Não desanime, semana que vem pode ser melhor! 💪
+                    </>
+                  ) : (
+                    <>
+                      <strong>Manteve o mesmo nível</strong> da semana anterior 
+                      ({(lastWeek.completude || 0).toFixed(1)}%). Consistência é importante! ⚖️
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Recomendações */}
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+              <h3 className="font-semibold text-yellow-700 mb-2">
+                💡 Recomendações
+              </h3>
+              <div className="text-yellow-600 space-y-1">
+                {(lastWeek.completude || 0) >= 70 ? (
+                  <p>Excelente semana! Continue mantendo essa disciplina e consistência. 🌟</p>
+                ) : (lastWeek.completude || 0) >= 50 ? (
+                  <p>Boa semana! Tente focar nos hábitos que ficaram mais baixos para a próxima. 📚</p>
+                ) : (lastWeek.completude || 0) >= 30 ? (
+                  <p>Semana desafiadora. Escolha 1-2 hábitos prioritários para focar mais. 🎯</p>
+                ) : (
+                  <p>Semana difícil. Comece pequeno: escolha apenas 1 hábito para focar esta semana. 🌱</p>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

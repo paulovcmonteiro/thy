@@ -460,7 +460,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={loading}
-                className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+                className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
                 style={{ minHeight: 64 }}
               >
                 Próximo 1/2
@@ -525,7 +525,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
                   type="button"
                   onClick={handleFinalSubmit}
                   disabled={loading}
-                  className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg mt-auto disabled:opacity-60"
+                  className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg mt-auto disabled:opacity-60"
                   style={{ minHeight: 64 }}
                 >
                   {loading ? (
@@ -623,7 +623,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
                   type="button"
                   onClick={() => setStep(2)}
                   disabled={loading}
-                  className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+                  className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
                   style={{ minHeight: 64 }}
                 >
                   Próximo 1/2
@@ -689,7 +689,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
                   type="button"
                   onClick={handleFinalSubmit}
                   disabled={loading}
-                  className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+                  className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
                   style={{ minHeight: 64 }}
                 >
                   {loading ? (

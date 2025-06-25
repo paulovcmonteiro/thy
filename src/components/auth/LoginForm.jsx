@@ -1,6 +1,6 @@
 // src/components/auth/LoginForm.jsx
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Target } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 
 const LoginForm = () => {
@@ -27,13 +27,12 @@ const LoginForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         
-        {/* Cabeçalho */}
+        {/* Cabeçalho com Thy bem grande */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Target className="text-blue-600" size={32} />
-            <h1 className="text-2xl font-bold text-gray-800">App de Hábitos</h1>
+          <div className="flex items-center justify-center mb-6">
+            <h1 className="text-6xl font-bold text-[#4682B4] tracking-wide">Thy</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-lg">
             {isRegistering ? 'Crie sua conta' : 'Entre na sua conta'}
           </p>
         </div>
@@ -52,7 +51,7 @@ const LoginForm = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4682B4] focus:border-transparent"
                 placeholder="seu@email.com"
                 required
               />
@@ -70,7 +69,7 @@ const LoginForm = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4682B4] focus:border-transparent"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -96,7 +95,7 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#4682B4] hover:bg-[#3a6d99] text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Carregando...' : (isRegistering ? 'Criar Conta' : 'Entrar')}
           </button>
@@ -106,7 +105,7 @@ const LoginForm = () => {
             <button
               type="button"
               onClick={() => setIsRegistering(!isRegistering)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="text-[#4682B4] hover:text-[#3a6d99] text-sm font-medium"
             >
               {isRegistering ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
             </button>
