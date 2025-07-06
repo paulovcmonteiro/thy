@@ -1,4 +1,4 @@
-// components/habitForms/WeeklyDebriefingForm.jsx - DEBRIEFING SEMANAL COM 3 PÁGINAS
+// components/habitForms/WeeklyDebriefingForm.jsx - DEBRIEFING SEMANAL COM 3 PÁGINAS - UX MOBILE MELHORADA
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Clock, Star, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -619,14 +619,15 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">✨ Reflexão Final</h3>
               
-              {/* Nota da semana */}
+              {/* Nota da semana - MELHORADA PARA MOBILE */}
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border">
                 <h4 className="font-semibold text-gray-800 mb-6 flex items-center justify-center gap-2 text-xl">
                   <Star className="text-yellow-500" size={24} />
                   Que nota você dá para esta semana?
                 </h4>
                 
-                <div className="flex items-center justify-center gap-4">
+                {/* DESKTOP: Layout original */}
+                <div className="hidden md:flex items-center justify-center gap-4">
                   {[
                     { rating: 1, emoji: '😞', label: 'Muito ruim' },
                     { rating: 2, emoji: '😕', label: 'Ruim' },
@@ -646,6 +647,29 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
                       <div className="text-4xl mb-2">{option.emoji}</div>
                       <div className="text-sm font-medium text-gray-700 text-center">{option.label}</div>
                       <div className="text-lg font-bold text-purple-600 mt-1">{option.rating}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* MOBILE: Layout simplificado - só emojis em linha */}
+                <div className="flex md:hidden items-center justify-center gap-4">
+                  {[
+                    { rating: 1, emoji: '😞' },
+                    { rating: 2, emoji: '😕' },
+                    { rating: 3, emoji: '😐' },
+                    { rating: 4, emoji: '😊' },
+                    { rating: 5, emoji: '🤩' }
+                  ].map(option => (
+                    <button
+                      key={option.rating}
+                      onClick={() => handleInputChange('weekRating', option.rating)}
+                      className={`flex items-center justify-center rounded-full transition-all duration-200 w-16 h-16 ${
+                        formData.weekRating === option.rating
+                          ? 'bg-purple-200 scale-110 shadow-lg'
+                          : 'bg-gray-100 hover:bg-purple-100'
+                      }`}
+                    >
+                      <div className="text-3xl">{option.emoji}</div>
                     </button>
                   ))}
                 </div>
@@ -719,27 +743,35 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Footer com navegação */}
+        {/* Footer com navegação - MELHORADO PARA MOBILE */}
         <div className="flex justify-between items-center p-6 border-t bg-gray-50">
+          {/* Botão Anterior */}
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
             className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            {/* DESKTOP: Com texto */}
             <ChevronLeft size={20} />
-            Anterior
+            <span className="hidden sm:inline">Anterior</span>
           </button>
           
+          {/* Indicador de página - SIMPLIFICADO */}
           <span className="text-gray-600 font-medium">
-            Página {currentPage} de 3
+            {/* DESKTOP: Texto completo */}
+            <span className="hidden sm:inline">Página {currentPage} de 3</span>
+            {/* MOBILE: Formato curto */}
+            <span className="sm:hidden">{currentPage}/3</span>
           </span>
           
+          {/* Botão Próximo */}
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === 3}
             className="flex items-center gap-2 px-4 py-2 text-white bg-purple-600 border border-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Próximo
+            {/* DESKTOP: Com texto */}
+            <span className="hidden sm:inline">Próximo</span>
             <ChevronRight size={20} />
           </button>
         </div>
