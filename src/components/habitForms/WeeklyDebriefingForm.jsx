@@ -48,6 +48,26 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     { key: 'descansar', label: '😴 Descansar', description: 'Descanso adequado' }
   ];
 
+  // 🆕 FUNÇÃO: Determinar semana default baseada no dia da semana
+  const getDefaultWeek = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=domingo, 1=segunda, ..., 6=sábado
+    
+    if (dayOfWeek === 6) {
+      // É sábado -> usar semana atual
+      const currentWeekSaturday = getWeekSaturday(today);
+      console.log('📅 [WeeklyDebriefing] É sábado! Usando semana atual:', currentWeekSaturday);
+      return currentWeekSaturday;
+    } else {
+      // Não é sábado -> usar semana anterior
+      const lastWeek = new Date(today);
+      lastWeek.setDate(today.getDate() - 7); // 7 dias atrás
+      const lastWeekSaturday = getWeekSaturday(lastWeek);
+      console.log('📅 [WeeklyDebriefing] Não é sábado! Usando semana anterior:', lastWeekSaturday);
+      return lastWeekSaturday;
+    }
+  };
+
   // Função para obter dados das últimas 4 semanas vs atual
   const getWeekComparison = () => {
     if (!data || !selectedWeek) {
@@ -96,12 +116,20 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     return { completudeData, weightData, currentWeek, last4Weeks };
   };
 
-  // Converter formato "16/06" para sábado
+  // 🔧 CORREÇÃO: Função melhorada para converter semana
   const convertSemanaToSaturday = (semanaStr) => {
     try {
       const [day, month] = semanaStr.split('/');
-      const currentYear = new Date().getFullYear();
-      const date = new Date(currentYear, parseInt(month) - 1, parseInt(day));
+      
+      // Determinar ano correto baseado no mês
+      let year = new Date().getFullYear();
+      
+      // Se o mês é dezembro e estamos em janeiro ou posterior, é do ano anterior
+      if (parseInt(month) === 12 && new Date().getMonth() >= 0) {
+        year = year - 1;
+      }
+      
+      const date = new Date(year, parseInt(month) - 1, parseInt(day));
       return getWeekSaturday(date);
     } catch (error) {
       return null;
@@ -276,11 +304,11 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     }
   };
 
-  // Inicializar quando abrir modal
+  // 🔧 CORREÇÃO: Inicializar com semana default baseada no dia da semana
   useEffect(() => {
     if (isOpen) {
-      const weekDate = getWeekSaturday();
-      setSelectedWeek(weekDate);
+      const defaultWeek = getDefaultWeek(); // Usar lógica de semana default
+      setSelectedWeek(defaultWeek);
       setCurrentPage(1);
       setHasLoadedData(false);
     }
@@ -386,29 +414,6 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
               <X size={24} />
             </button>
           </div>
-        </div>
-
-        {/* Indicador de páginas */}
-        <div className="flex justify-center items-center py-4 bg-gray-50 border-b">
-          {[1, 2, 3].map(page => (
-            <div key={page} className="flex items-center">
-              <button
-                onClick={() => goToPage(page)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                  currentPage === page 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
-              >
-                {page}
-              </button>
-              {page < 3 && (
-                <div className={`w-8 h-0.5 mx-2 ${
-                  currentPage > page ? 'bg-purple-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
         </div>
 
         {/* Conteúdo das páginas */}
@@ -616,29 +621,33 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
               
               {/* Nota da semana */}
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border">
-                <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Star className="text-yellow-500" size={20} />
+                <h4 className="font-semibold text-gray-800 mb-6 flex items-center justify-center gap-2 text-xl">
+                  <Star className="text-yellow-500" size={24} />
                   Que nota você dá para esta semana?
                 </h4>
                 
-                <div className="flex items-center gap-3">
-                  {[1, 2, 3, 4, 5].map(rating => (
+                <div className="flex items-center justify-center gap-4">
+                  {[
+                    { rating: 1, emoji: '😞', label: 'Muito ruim' },
+                    { rating: 2, emoji: '😕', label: 'Ruim' },
+                    { rating: 3, emoji: '😐', label: 'Satisfatório' },
+                    { rating: 4, emoji: '😊', label: 'Bom' },
+                    { rating: 5, emoji: '🤩', label: 'Muito bom!' }
+                  ].map(option => (
                     <button
-                      key={rating}
-                      onClick={() => handleInputChange('weekRating', rating)}
-                      className={`w-12 h-12 rounded-full border-2 font-bold transition-all ${
-                        formData.weekRating === rating
-                          ? 'bg-purple-600 text-white border-purple-600 scale-110'
-                          : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'
+                      key={option.rating}
+                      onClick={() => handleInputChange('weekRating', option.rating)}
+                      className={`flex flex-col items-center p-4 rounded-2xl border-2 transition-all duration-200 min-w-[100px] ${
+                        formData.weekRating === option.rating
+                          ? 'bg-purple-100 border-purple-500 scale-105 shadow-lg'
+                          : 'bg-white border-gray-300 hover:border-purple-300 hover:bg-purple-50'
                       }`}
                     >
-                      {rating}
+                      <div className="text-4xl mb-2">{option.emoji}</div>
+                      <div className="text-sm font-medium text-gray-700 text-center">{option.label}</div>
+                      <div className="text-lg font-bold text-purple-600 mt-1">{option.rating}</div>
                     </button>
                   ))}
-                </div>
-                
-                <div className="mt-2 text-sm text-gray-600">
-                  1 = Muito ruim • 2 = Ruim • 3 = Satisfatório • 4 = Bom • 5 = Muito bom!
                 </div>
               </div>
 

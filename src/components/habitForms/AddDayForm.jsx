@@ -1,11 +1,13 @@
-// components/forms/AddDayForm.jsx - FORMULÁRIO COM AUTO-SAVE + HUMOR
+// components/forms/AddDayForm.jsx - FORMULÁRIO COM AUTO-SAVE CORRIGIDO
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Calendar, Save, Check, AlertCircle, Clock } from 'lucide-react';
+import useDashboardData from '../../hooks/useDashboardData';
 import { getDayHabits } from '../../firebase/habitsService';
 
-const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
+const AddDayForm = ({ isOpen, onClose }) => {
+  const { addNewDay, refreshData } = useDashboardData();
 
-  // 🆕 FUNÇÃO: RECUPERAR ÚLTIMA DATA USADA
+  // 🆕 FUNÇÃO: RECUPERAR ÚLTIMA DATA USADA (APENAS PARA INICIALIZAÇÃO)
   const getInitialDate = () => {
     try {
       const savedDate = localStorage.getItem('habitTracker_lastUsedDate');
@@ -30,13 +32,12 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0]; // "2025-06-22"
-  const todayFormatted = new Date().toLocaleDateString('pt-BR'); // "22/06/2025"
-  const initialDate = getInitialDate(); // Data inicial (última usada ou hoje)
+  const today = new Date().toISOString().split('T')[0];
+  const todayFormatted = new Date().toLocaleDateString('pt-BR');
 
-  // Estado do formulário - ADICIONADO: humor
+  // Estado do formulário
   const [formData, setFormData] = useState({
-    date: initialDate,
+    date: today, // 🔧 CORREÇÃO: Iniciar sempre com hoje, não com data salva
     peso: '',
     meditar: false,
     medicar: false,
@@ -45,8 +46,8 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
     alimentar: false,
     estudar: false,
     descansar: false,
-    humor: '', // 🆕 NOVO CAMPO: 'ansioso', 'ok', 'produtivo'
-    obs: ''
+    obs: '',
+    sentimento: '' // 🆕 Novo campo para sentimento (ansioso, normal, produtivo)
   });
 
   const [loading, setLoading] = useState(false);
@@ -54,9 +55,10 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
   const [successMessage, setSuccessMessage] = useState('');
 
   // 🆕 ESTADOS PARA AUTO-SAVE
-  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+  const [saveStatus, setSaveStatus] = useState('idle');
   const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
   const [hasLoadedExistingData, setHasLoadedExistingData] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false); // 🆕 Evitar loops
 
   // Novo estado para controlar o passo do formulário mobile
   const [step, setStep] = useState(1);
@@ -72,11 +74,11 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
     { key: 'descansar', label: '😴 Descansar', description: 'Descanso adequado' }
   ];
 
-  // 🆕 OPÇÕES DE HUMOR COM EMOJIS
-  const humorOptions = [
-    { key: 'ansioso', emoji: '😰', label: 'Ansioso' },
-    { key: 'ok', emoji: '😐', label: 'Ok' },
-    { key: 'produtivo', emoji: '😊', label: 'Produtivo' }
+  // 🆕 Lista de sentimentos para step 2 mobile
+  const sentimentosList = [
+    { key: 'ansioso', label: '😟 Ansioso', color: 'orange' },
+    { key: 'normal', label: '😐 Normal', color: 'gray' },
+    { key: 'produtivo', label: '😊 Produtivo', color: 'green' }
   ];
 
   // 🆕 FUNÇÃO: SALVAR DATA NO LOCALSTORAGE
@@ -100,28 +102,31 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
         const existingData = result.data;
         console.log('✅ [AddDayForm] Dados encontrados:', existingData);
         
-        // Carregar dados no formulário - INCLUINDO HUMOR
-        setFormData({
-          date: dateISO,
+        // 🔧 CORREÇÃO: Atualizar APENAS os campos de dados, NÃO a data
+        setFormData(prevData => ({
+          ...prevData, // Manter data atual
           peso: existingData.peso ? existingData.peso.toString() : '',
-          meditar: Boolean(existingData.meditar),
-          medicar: Boolean(existingData.medicar),
-          exercitar: Boolean(existingData.exercitar),
-          comunicar: Boolean(existingData.comunicar),
-          alimentar: Boolean(existingData.alimentar),
-          estudar: Boolean(existingData.estudar),
-          descansar: Boolean(existingData.descansar),
-          humor: existingData.humor || '', // 🆕 CARREGAR HUMOR
-          obs: existingData.obs || ''
-        });
+          meditar: existingData.meditar || false,
+          medicar: existingData.medicar || false,
+          exercitar: existingData.exercitar || false,
+          comunicar: existingData.comunicar || false,
+          alimentar: existingData.alimentar || false,
+          estudar: existingData.estudar || false,
+          descansar: existingData.descansar || false,
+          obs: existingData.obs || '',
+          sentimento: existingData.sentimento || '' // 🆕 Carregar sentimento salvo
+        }));
         
-        setHasLoadedExistingData(true);
         setSaveStatus('saved');
+        setHasLoadedExistingData(true);
+        console.log('✅ [AddDayForm] Dados carregados no formulário');
+        
       } else {
-        console.log('ℹ️ [AddDayForm] Nenhum dado existente para esta data');
-        // Manter data, resetar resto
-        setFormData(prev => ({
-          date: dateISO,
+        console.log('ℹ️ [AddDayForm] Nenhum dado encontrado para', dateISO, '- novo dia');
+        
+        // 🔧 CORREÇÃO: Limpar APENAS os dados, não a data
+        setFormData(prevData => ({
+          ...prevData, // Manter data atual
           peso: '',
           meditar: false,
           medicar: false,
@@ -130,135 +135,191 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
           alimentar: false,
           estudar: false,
           descansar: false,
-          humor: '', // 🆕 RESETAR HUMOR
-          obs: ''
+          obs: '',
+          sentimento: '' // 🆕 Limpar sentimento também
         }));
-        setHasLoadedExistingData(false);
+        
+        setHasLoadedExistingData(true);
         setSaveStatus('idle');
       }
+      
     } catch (error) {
       console.error('❌ [AddDayForm] Erro ao carregar dados existentes:', error);
-      setHasLoadedExistingData(false);
-      setSaveStatus('error');
+      setHasLoadedExistingData(true);
+      setSaveStatus('idle');
     }
   }, []);
 
-  // 🔄 EFEITO: Carregar dados quando data muda
-  useEffect(() => {
-    if (isOpen && formData.date) {
-      loadExistingDay(formData.date);
-    }
-  }, [isOpen, formData.date, loadExistingDay]);
-
-  // 🆕 FUNÇÃO: AUTO-SAVE INTELIGENTE
-  const triggerAutoSave = useCallback(async () => {
-    // Só fazer auto-save se há dados significativos para salvar
-    const hasHabitsData = habitsList.some(h => formData[h.key]);
-    const hasWeightData = formData.peso && formData.peso.trim() !== '';
-    const hasObsData = formData.obs && formData.obs.trim() !== '';
-    const hasHumorData = formData.humor !== ''; // 🆕 VERIFICAR HUMOR
-    
-    if (!hasHabitsData && !hasWeightData && !hasObsData && !hasHumorData) {
-      console.log('🤷 [AddDayForm] Nenhum dado significativo para auto-save');
-      setSaveStatus('idle');
-      return;
-    }
-
-    setSaveStatus('saving');
-
+  // 🆕 FUNÇÃO: AUTO-SAVE COM DEBOUNCE
+  const performAutoSave = useCallback(async (dataToSave) => {
     try {
-      const autoSaveData = {
-        date: formData.date,
-        peso: formData.peso ? Number(formData.peso) : null,
-        meditar: Boolean(formData.meditar),
-        medicar: Boolean(formData.medicar),
-        exercitar: Boolean(formData.exercitar),
-        comunicar: Boolean(formData.comunicar),
-        alimentar: Boolean(formData.alimentar),
-        estudar: Boolean(formData.estudar),
-        descansar: Boolean(formData.descansar),
-        humor: formData.humor, // 🆕 SALVAR HUMOR
-        obs: formData.obs || ''
-      };
+      setSaveStatus('saving');
+      console.log('💾 [AddDayForm] Auto-salvando...', dataToSave.date);
 
-      const result = await addNewDay(autoSaveData);
+      const result = await addNewDay(dataToSave);
       
       if (result.success) {
-        console.log('✅ [AddDayForm] Auto-save realizado com sucesso');
         setSaveStatus('saved');
-        saveLastUsedDate(formData.date);
+        console.log('✅ [AddDayForm] Auto-save realizado com sucesso');
+        
+        // Limpar indicador de "saved" após 2 segundos
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 2000);
+        
       } else {
-        console.error('❌ [AddDayForm] Erro no auto-save:', result.error);
         setSaveStatus('error');
+        console.error('❌ [AddDayForm] Erro no auto-save:', result.error);
+        
+        // Limpar status de erro após 3 segundos
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 3000);
       }
 
     } catch (error) {
-      console.error('❌ [AddDayForm] Erro inesperado no auto-save:', error);
       setSaveStatus('error');
+      console.error('❌ [AddDayForm] Erro inesperado no auto-save:', error);
+      
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 3000);
     }
-  }, [formData, addNewDay, habitsList]);
+  }, [addNewDay]);
 
-  // 🔄 MODIFICADO: Handle input changes com auto-save
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setErrors(prev => ({ ...prev, [field]: null }));
+  // 🆕 FUNÇÃO: TRIGGER AUTO-SAVE COM DEBOUNCE
+  const triggerAutoSave = useCallback((newFormData) => {
+    // Só auto-salvar se já carregou dados existentes (evita salvar antes de carregar)
+    if (!hasLoadedExistingData) {
+      return;
+    }
 
-    // Cancelar auto-save anterior
+    // Validações básicas para auto-save
+    if (!newFormData.date) {
+      return;
+    }
+
+    // Verificar se há dados significativos para salvar
+    const hasSignificantData = 
+      newFormData.peso || 
+      newFormData.meditar || 
+      newFormData.medicar || 
+      newFormData.exercitar || 
+      newFormData.comunicar || 
+      newFormData.alimentar || 
+      newFormData.estudar || 
+      newFormData.descansar || 
+      newFormData.obs ||
+      newFormData.sentimento; // 🆕 Incluir sentimento na verificação
+
+    if (!hasSignificantData) {
+      console.log('🤷 [AddDayForm] Nenhum dado significativo para auto-save');
+      return;
+    }
+
+    // Limpar timeout anterior
     if (autoSaveTimeout) {
       clearTimeout(autoSaveTimeout);
     }
 
-    // Agendar novo auto-save em 2 segundos
+    // Agendar novo auto-save com debounce de 1.5 segundos
     const timeoutId = setTimeout(() => {
-      triggerAutoSave();
-    }, 2000);
+      console.log('⏰ [AddDayForm] Trigger auto-save após debounce');
+      
+      // Preparar dados para auto-save
+      const autoSaveData = {
+        date: newFormData.date,
+        peso: newFormData.peso ? Number(newFormData.peso) : null,
+        meditar: Boolean(newFormData.meditar),
+        medicar: Boolean(newFormData.medicar),
+        exercitar: Boolean(newFormData.exercitar),
+        comunicar: Boolean(newFormData.comunicar),
+        alimentar: Boolean(newFormData.alimentar),
+        estudar: Boolean(newFormData.estudar),
+        descansar: Boolean(newFormData.descansar),
+        obs: newFormData.obs || '',
+        sentimento: newFormData.sentimento || '' // 🆕 Incluir sentimento no auto-save
+      };
+
+      performAutoSave(autoSaveData);
+    }, 1500);
 
     setAutoSaveTimeout(timeoutId);
-  };
+  }, [autoSaveTimeout, hasLoadedExistingData, performAutoSave]);
 
-  // 🎨 FUNÇÃO: Estilos do humor (modo greyed limpo)
-  const getHumorButtonStyles = (isSelected, isAnySelected) => {
-    const isOtherSelected = isAnySelected && !isSelected;
-    return {
-      base: "flex flex-col items-center gap-3 p-4 rounded-none border-0 transition-all duration-300 bg-transparent",
-      emoji: isOtherSelected ? "grayscale opacity-40" : (isSelected ? "drop-shadow-lg" : "drop-shadow-sm"),
-      text: isOtherSelected ? 'text-gray-300' : (isSelected ? 'text-blue-600 font-bold' : 'text-gray-600')
+  // Handle mudanças no formulário COM AUTO-SAVE
+  const handleInputChange = (field, value) => {
+    const newFormData = {
+      ...formData,
+      [field]: value
     };
-  };
-
-  // 🆕 FUNÇÃO: SELECIONAR HUMOR
-  const handleHumorSelect = (humorKey) => {
-    handleInputChange('humor', humorKey);
-  };
-  const handleClose = () => {
-    // Cancelar auto-save pendente
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
+    
+    setFormData(newFormData);
+    
+    // 🆕 SALVAR DATA NO LOCALSTORAGE QUANDO MUDAR
+    if (field === 'date') {
+      saveLastUsedDate(value);
+      // 🔧 CORREÇÃO: Carregar dados da nova data
+      setHasLoadedExistingData(false);
+      loadExistingDay(value);
+    }
+    
+    // Limpar erro do campo
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }));
     }
 
-    // Reset estados
-    setFormData({
-      date: getInitialDate(),
-      peso: '',
-      meditar: false,
-      medicar: false,
-      exercitar: false,
-      comunicar: false,
-      alimentar: false,
-      estudar: false,
-      descansar: false,
-      humor: '', // 🆕 RESETAR HUMOR
-      obs: ''
-    });
-    setErrors({});
-    setSuccessMessage('');
-    setSaveStatus('idle');
-    setHasLoadedExistingData(false);
-    
-    onClose();
+    // 🆕 TRIGGER AUTO-SAVE (apenas se não for mudança de data)
+    if (field !== 'date') {
+      triggerAutoSave(newFormData);
+    }
   };
 
-  // Validação do formulário
+  // Handle toggle de hábitos COM AUTO-SAVE
+  const handleHabitToggle = (habitKey) => {
+    const newFormData = {
+      ...formData,
+      [habitKey]: !formData[habitKey]
+    };
+    
+    setFormData(newFormData);
+
+    // 🆕 TRIGGER AUTO-SAVE
+    triggerAutoSave(newFormData);
+  };
+
+  // 🔧 CORREÇÃO: useEffect SIMPLIFICADO - só roda na abertura do modal
+  useEffect(() => {
+    if (isOpen && !isInitialized) {
+      console.log('🚀 [AddDayForm] Inicializando formulário...');
+      
+      // Usar última data salva como data inicial
+      const initialDate = getInitialDate();
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        date: initialDate 
+      }));
+      
+      // Carregar dados da data inicial
+      loadExistingDay(initialDate);
+      setIsInitialized(true);
+    }
+  }, [isOpen, isInitialized, loadExistingDay]);
+
+  // 🆕 LIMPAR TIMEOUT AO DESMONTAR
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+    };
+  }, [autoSaveTimeout]);
+
+  // Validações
   const validateForm = () => {
     const newErrors = {};
 
@@ -290,7 +351,7 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // 🔄 MODIFICADO: Handle submit manual com humor
+  // Handle submit manual
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -318,8 +379,8 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
         alimentar: Boolean(formData.alimentar),
         estudar: Boolean(formData.estudar),
         descansar: Boolean(formData.descansar),
-        humor: formData.humor, // 🆕 INCLUIR HUMOR NO SUBMIT
-        obs: formData.obs || ''
+        obs: formData.obs || '',
+        sentimento: formData.sentimento || '' // 🆕 Incluir sentimento no submit
       };
 
       const result = await addNewDay(submitData);
@@ -347,19 +408,64 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
     }
   };
 
-  // Componente para mostrar status do auto-save
+  // Reset ao fechar
+  const handleClose = () => {
+    if (!loading) {
+      // Cancelar auto-save pendente
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+      
+      // 🔧 CORREÇÃO: Reset completo
+      setFormData({
+        date: today,
+        peso: '',
+        meditar: false,
+        medicar: false,
+        exercitar: false,
+        comunicar: false,
+        alimentar: false,
+        estudar: false,
+        descansar: false,
+        obs: '',
+        sentimento: '' // 🆕 Reset sentimento também
+      });
+      setErrors({});
+      setSuccessMessage('');
+      setSaveStatus('idle');
+      setHasLoadedExistingData(false);
+      setIsInitialized(false); // 🆕 Permitir nova inicialização
+      onClose();
+    }
+  };
+
+  // Indicador de status de salvamento
   const SaveStatusIndicator = () => {
-    const configs = {
-      idle: { icon: <Clock size={20} />, text: 'Pronto', color: 'text-gray-500', border: 'border-gray-300' },
-      saving: { icon: <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>, text: 'Salvando...', color: 'text-blue-600', border: 'border-blue-300' },
-      saved: { icon: <Check size={20} />, text: 'Salvo', color: 'text-green-600', border: 'border-green-300' },
-      error: { icon: <AlertCircle size={20} />, text: 'Erro', color: 'text-red-600', border: 'border-red-300' }
+    const statusConfig = {
+      idle: { icon: null, text: '', color: '' },
+      saving: { 
+        icon: <Clock size={16} className="animate-spin" />, 
+        text: 'Salvando...', 
+        color: 'text-blue-600' 
+      },
+      saved: { 
+        icon: <Check size={16} />, 
+        text: 'Salvo automaticamente', 
+        color: 'text-green-600' 
+      },
+      error: { 
+        icon: <AlertCircle size={16} />, 
+        text: 'Erro ao salvar', 
+        color: 'text-red-600' 
+      }
     };
 
-    const config = configs[saveStatus];
+    const config = statusConfig[saveStatus];
+    
+    if (saveStatus === 'idle') return null;
 
     return (
-      <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${config.color} ${config.border}`}>
+      <div className={`flex items-center gap-2 text-sm ${config.color} bg-white px-3 py-1 rounded-full shadow-sm border`}>
         {config.icon}
         <span>{config.text}</span>
       </div>
@@ -411,34 +517,30 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
                 max={today}
-                className="w-full text-xl px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold mb-8 bg-white"
+                className="w-full text-xl px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold mb-3"
                 disabled={loading}
                 style={{ fontSize: '1.2rem' }}
               />
-
               {/* Peso */}
               <input
                 type="number"
+                step="0.1"
                 value={formData.peso}
                 onChange={(e) => handleInputChange('peso', e.target.value)}
                 placeholder="Peso (kg)"
-                step="0.1"
-                min="0"
-                max="200"
-                className="w-full text-xl px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center mb-8 bg-white"
+                className="w-full text-xl px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold mb-4"
                 disabled={loading}
                 style={{ fontSize: '1.2rem' }}
               />
-
-              {/* Hábitos */}
-              <div className="grid grid-cols-1 gap-4 mb-8">
-                {habitsList.map((habit) => (
+              {/* Hábitos em lista vertical, botões grandes */}
+              <div className="flex flex-col gap-3 my-4">
+                {habitsList.map((habit, idx) => (
                   <button
                     key={habit.key}
                     type="button"
-                    onClick={() => handleInputChange(habit.key, !formData[habit.key])}
-                    className={`flex items-center gap-4 px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
-                      formData[habit.key] 
+                    onClick={() => handleHabitToggle(habit.key)}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-300 text-3xl w-full ${
+                      formData[habit.key]
                         ? 'bg-green-100 border-green-500 scale-105'
                         : 'bg-gray-50 border-gray-200 opacity-90'
                     }`}
@@ -458,7 +560,7 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={loading}
-                className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+                className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
                 style={{ minHeight: 64 }}
               >
                 Próximo 1/2
@@ -469,61 +571,49 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
         
         {step === 2 && (
           <>
-            <div className="flex flex-col justify-between h-full w-full">
-              <div className="mb-8 mt-8 px-4">
-                
-                {/* 🆕 SEÇÃO DE HUMOR - MOBILE (greyed clean) */}
-                <div className="mb-10">
-                  <div className="text-2xl font-bold text-gray-800 mb-8 text-center">Como você se sentiu hoje?</div>
-                  <div className="flex justify-center gap-8">
-                    {humorOptions.map((option) => {
-                      const isSelected = formData.humor === option.key;
-                      const isAnySelected = formData.humor !== '';
-                      const styles = getHumorButtonStyles(isSelected, isAnySelected);
-                      return (
-                        <button
-                          key={option.key}
-                          type="button"
-                          onClick={() => handleHumorSelect(option.key)}
-                          className={styles.base}
-                          disabled={loading}
-                        >
-                          <span 
-                            className={`text-7xl transition-all duration-300 ${styles.emoji}`}
-                          >
-                            {option.emoji}
-                          </span>
-                          <span className={`text-sm transition-all duration-300 ${styles.text}`}>
-                            {option.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+            <div className="flex flex-col justify-between h-full w-full px-4">
+              <div className="mb-8 mt-4">
+                {/* 🆕 Pergunta sobre sentimento */}
+                <div className="text-2xl font-bold text-gray-800 mb-6 text-center">Como você está se sentindo?</div>
+                <div className="flex gap-3 mb-8">
+                  {sentimentosList.map((sentimento) => (
+                    <button
+                      key={sentimento.key}
+                      type="button"
+                      onClick={() => handleInputChange('sentimento', sentimento.key)}
+                      className={`flex-1 p-4 rounded-2xl border-2 transition-all duration-150 text-center ${
+                        formData.sentimento === sentimento.key
+                          ? `bg-${sentimento.color}-100 border-${sentimento.color}-500 scale-105`
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                      disabled={loading}
+                    >
+                      <div className="text-3xl mb-1">{sentimento.label.split(' ')[0]}</div>
+                      <div className="text-sm font-semibold text-gray-700">{sentimento.label.split(' ')[1]}</div>
+                    </button>
+                  ))}
                 </div>
 
-                {/* 🔄 MODIFICADO: Textarea com novo texto */}
-                <div className="mb-10">
-                  <div className="text-2xl font-bold text-gray-800 mb-6 text-center">Conte me mais</div>
-                  <textarea
-                    value={formData.obs}
-                    onChange={(e) => handleInputChange('obs', e.target.value)}
-                    placeholder="Escreva aqui seu comentário, reflexão ou diagnóstico do dia..."
-                    rows={6}
-                    className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg resize-none"
-                    style={{ minHeight: 150 }}
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
+                {/* Área de observações */}
+                <div className="text-xl font-bold text-gray-800 mb-4 text-center">Como foi seu dia?</div>
+                <textarea
+                  value={formData.obs}
+                  onChange={(e) => handleInputChange('obs', e.target.value)}
+                  placeholder="Escreva aqui seu comentário, reflexão ou diagnóstico do dia..."
+                  rows={6}
+                  className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg resize-none"
+                  style={{ minHeight: 140 }}
+                  disabled={loading}
+                />
               </div>
-              
-              <div className="px-4 pb-4">
+
+              {/* Botão de finalizar */}
+              <div className="pb-4">
                 <button
                   type="button"
                   onClick={handleFinalSubmit}
                   disabled={loading}
-                  className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg mt-auto disabled:opacity-60"
+                  className="w-full py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
                   style={{ minHeight: 64 }}
                 >
                   {loading ? (
@@ -535,27 +625,28 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
                     </>
                   )}
                 </button>
-                {/* Voltar */}
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  disabled={loading}
-                  className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 text-3xl"
-                  style={{ zIndex: 10 }}
-                >
-                  &#8592;
-                </button>
               </div>
+
+              {/* Botão Voltar */}
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={loading}
+                className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 text-3xl"
+                style={{ zIndex: 10 }}
+              >
+                &#8592;
+              </button>
             </div>
           </>
         )}
       </div>
       
-      {/* DESKTOP: FLUXO EM 2 ETAPAS (igual mobile) */}
+      {/* DESKTOP: TUDO EM UMA TELA SÓ */}
       <div className="hidden lg:flex items-center justify-center fixed inset-0 z-50 bg-black bg-opacity-10">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-0 relative flex flex-col" style={{ maxHeight: '90vh', minWidth: '480px' }}>
+        <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-0 relative flex flex-col" style={{ maxHeight: '90vh', minWidth: '520px' }}>
           {/* Header com status e botão fechar */}
-          <div className="flex items-center justify-between px-8 pt-6">
+          <div className="flex items-center justify-between px-10 pt-6">
             <SaveStatusIndicator />
             <button
               onClick={handleCloseAndReset}
@@ -566,152 +657,107 @@ const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
             </button>
           </div>
           
-          {step === 1 && (
-            <>
-              {/* Conteúdo rolável - ETAPA 1 */}
-              <div className="flex-1 overflow-y-auto px-8 pt-4 pb-32">
-                <form className="flex flex-col gap-6">
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange('date', e.target.value)}
-                    max={today}
-                    className="w-full text-xl px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold"
+          {/* Conteúdo rolável */}
+          <div className="flex-1 overflow-y-auto px-10 pt-4 pb-32">
+            <form onSubmit={handleFinalSubmit} className="flex flex-col gap-8">
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                max={today}
+                className="w-full max-w-2xl mx-auto text-xl px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold"
+                disabled={loading}
+                style={{ fontSize: '1.2rem' }}
+              />
+              <input
+                type="number"
+                step="0.1"
+                value={formData.peso}
+                onChange={(e) => handleInputChange('peso', e.target.value)}
+                placeholder="Peso (kg)"
+                className="w-full max-w-2xl mx-auto text-xl px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold"
+                disabled={loading}
+                style={{ fontSize: '1.2rem' }}
+              />
+              <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
+                {habitsList.map((habit, idx) => (
+                  <button
+                    key={habit.key}
+                    type="button"
+                    onClick={() => handleHabitToggle(habit.key)}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-300 w-full ${
+                      formData[habit.key]
+                        ? 'bg-green-100 border-green-500 scale-105'
+                        : 'bg-gray-50 border-gray-200 opacity-90'
+                    }`}
+                    style={{ minHeight: 72 }}
                     disabled={loading}
-                    style={{ fontSize: '1.2rem' }}
-                  />
-                  <input
-                    type="number"
-                    value={formData.peso}
-                    onChange={(e) => handleInputChange('peso', e.target.value)}
-                    placeholder="Peso (kg)"
-                    step="0.1"
-                    min="0"
-                    max="200"
-                    className="w-full text-xl px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center"
-                    disabled={loading}
-                    style={{ fontSize: '1.2rem' }}
-                  />
-                  <div className="grid grid-cols-1 gap-3 w-full">
-                    {habitsList.map((habit) => (
-                      <button
-                        key={habit.key}
-                        type="button"
-                        onClick={() => handleInputChange(habit.key, !formData[habit.key])}
-                        className={`flex items-center gap-4 px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
-                          formData[habit.key] 
-                            ? 'bg-green-100 border-green-500 scale-105'
-                            : 'bg-gray-50 border-gray-200 opacity-90'
-                        }`}
-                        style={{ minHeight: 72 }}
-                        disabled={loading}
-                      >
-                        <span className="text-5xl">{habit.label.split(' ')[0]}</span>
-                        <span className="text-lg font-semibold text-gray-800 flex-1 text-left">{habit.label.replace(/^[^ ]+ /, '')}</span>
-                        <span className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${formData[habit.key] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>{formData[habit.key] && <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}</span>
-                      </button>
-                    ))}
-                  </div>
-                </form>
+                  >
+                    <span className="text-5xl">{habit.label.split(' ')[0]}</span>
+                    <span className="text-lg font-semibold text-gray-800 flex-1 text-left">{habit.label.replace(/^[^ ]+ /, '')}</span>
+                    <span className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${formData[habit.key] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>{formData[habit.key] && <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}</span>
+                  </button>
+                ))}
               </div>
-              
-              {/* Botão Próximo fixo na base - DESKTOP ETAPA 1 */}
-              <div className="w-full px-8 pb-8 pt-4 bg-white sticky bottom-0 left-0 z-30 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  disabled={loading}
-                  className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
-                  style={{ minHeight: 64 }}
-                >
-                  Próximo 1/2
-                </button>
-              </div>
-            </>
-          )}
 
-          {step === 2 && (
-            <>
-              {/* Conteúdo rolável - ETAPA 2 */}
-              <div className="flex-1 overflow-y-auto px-8 pt-4 pb-32">
-                
-                {/* 🆕 SEÇÃO DE HUMOR - DESKTOP (greyed clean) */}
-                <div className="mb-10">
-                  <div className="text-2xl font-bold text-gray-800 mb-8 text-center">Como você se sentiu hoje?</div>
-                  <div className="flex justify-center gap-8">
-                    {humorOptions.map((option) => {
-                      const isSelected = formData.humor === option.key;
-                      const isAnySelected = formData.humor !== '';
-                      const styles = getHumorButtonStyles(isSelected, isAnySelected);
-                      return (
-                        <button
-                          key={option.key}
-                          type="button"
-                          onClick={() => handleHumorSelect(option.key)}
-                          className={styles.base}
-                          disabled={loading}
-                        >
-                          <span 
-                            className={`text-6xl transition-all duration-300 ${styles.emoji}`}
-                          >
-                            {option.emoji}
-                          </span>
-                          <span className={`text-sm transition-all duration-300 ${styles.text}`}>
-                            {option.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 🔄 MODIFICADO: Textarea com novo texto - DESKTOP */}
-                <div className="mb-10">
-                  <div className="text-2xl font-bold text-gray-800 mb-6 text-center">Conte me mais</div>
-                  <textarea
-                    value={formData.obs}
-                    onChange={(e) => handleInputChange('obs', e.target.value)}
-                    placeholder="Escreva aqui seu comentário, reflexão ou diagnóstico do dia..."
-                    rows={5}
-                    className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg resize-none"
-                    style={{ minHeight: 120 }}
-                    disabled={loading}
-                    autoFocus
-                  />
+              {/* 🆕 Pergunta sobre sentimento - DESKTOP */}
+              <div className="w-full max-w-2xl mx-auto">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Como você está se sentindo?</h3>
+                <div className="flex gap-4">
+                  {sentimentosList.map((sentimento) => (
+                    <button
+                      key={sentimento.key}
+                      type="button"
+                      onClick={() => handleInputChange('sentimento', sentimento.key)}
+                      className={`flex-1 p-4 rounded-2xl border-2 transition-all duration-150 text-center ${
+                        formData.sentimento === sentimento.key
+                          ? `bg-${sentimento.color}-100 border-${sentimento.color}-500 scale-105`
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                      disabled={loading}
+                      style={{ minHeight: 72 }}
+                    >
+                      <div className="text-4xl mb-2">{sentimento.label.split(' ')[0]}</div>
+                      <div className="text-base font-semibold text-gray-700">{sentimento.label.split(' ')[1]}</div>
+                    </button>
+                  ))}
                 </div>
               </div>
-              
-              {/* Botão Finalizar + Voltar - DESKTOP ETAPA 2 */}
-              <div className="w-full px-8 pb-8 pt-4 bg-white sticky bottom-0 left-0 z-30 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={handleFinalSubmit}
+
+              <div className="w-full max-w-2xl mx-auto">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Como foi seu dia?</h3>
+                <textarea
+                  value={formData.obs}
+                  onChange={(e) => handleInputChange('obs', e.target.value)}
+                  placeholder="Escreva aqui seu comentário, reflexão ou diagnóstico do dia..."
+                  rows={5}
+                  className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg resize-none"
+                  style={{ minHeight: 120 }}
                   disabled={loading}
-                  className="w-full py-5 rounded-2xl bg-[#4682B4] hover:bg-[#3a6d99] text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
-                  style={{ minHeight: 64 }}
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      <Save size={28} />
-                      Finalizar Dia
-                    </>
-                  )}
-                </button>
-                {/* Botão Voltar */}
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  disabled={loading}
-                  className="absolute top-4 left-8 text-gray-400 hover:text-gray-700 text-3xl"
-                  style={{ zIndex: 10 }}
-                >
-                  &#8592;
-                </button>
+                />
               </div>
-            </>
-          )}
+            </form>
+          </div>
+          
+          {/* Botão Finalizar Dia fixo na base */}
+          <div className="w-full px-10 pb-8 pt-4 bg-white sticky bottom-0 left-0 z-30 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={handleFinalSubmit}
+              disabled={loading}
+              className="w-full max-w-2xl mx-auto py-5 rounded-2xl bg-blue-600 text-white text-2xl font-bold flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
+              style={{ minHeight: 64 }}
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              ) : (
+                <>
+                  <Save size={28} />
+                  Finalizar Dia
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
       

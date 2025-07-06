@@ -10,6 +10,33 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  // 🔧 CORREÇÃO: Função melhorada para converter semana
+  const convertSemanaToSaturday = (semanaStr) => {
+    try {
+      // semanaStr vem como "16/06" (DD/MM)
+      const [day, month] = semanaStr.split('/');
+      
+      // 🔧 CORREÇÃO: Determinar ano correto baseado no mês
+      let year = new Date().getFullYear(); // 2025
+      
+      // Se o mês é dezembro e estamos em janeiro ou posterior, é do ano anterior
+      if (parseInt(month) === 12 && new Date().getMonth() >= 0) {
+        year = year - 1; // 29/12 será 2024
+      }
+      
+      // Criar data com ano correto
+      const date = new Date(year, parseInt(month) - 1, parseInt(day));
+      
+      console.log(`🔧 [WeekSelector] Convertendo ${semanaStr} -> ${date.toISOString().split('T')[0]} (ano ${year})`);
+      
+      // Encontrar o sábado dessa semana
+      return getWeekSaturday(date);
+    } catch (error) {
+      console.warn('⚠️ [WeekSelector] Erro ao converter semana:', semanaStr, error);
+      return null;
+    }
+  };
+
   // Carregar semanas disponíveis
   const loadAvailableWeeks = async () => {
     setLoading(true);
@@ -34,7 +61,8 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
             displayName: week.semana,
             hasData: true,
             hasDebriefing: !!existingDebriefing,
-            debriefingStatus: existingDebriefing?.status || null
+            debriefingStatus: existingDebriefing?.status || null,
+            rawDate: new Date(weekSaturday) // 🆕 Para ordenação correta
           });
         }
       });
@@ -49,12 +77,16 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
           displayName: formatWeekForDisplay(currentSaturday),
           hasData: false,
           hasDebriefing: !!currentDebriefing,
-          debriefingStatus: currentDebriefing?.status || null
+          debriefingStatus: currentDebriefing?.status || null,
+          rawDate: new Date(currentSaturday) // 🆕 Para ordenação correta
         });
       }
       
-      // Ordenar por data (mais recentes primeiro)
-      weekOptions.sort((a, b) => new Date(b.weekDate) - new Date(a.weekDate));
+      // 🔧 CORREÇÃO: Ordenar por data raw (mais recentes primeiro)
+      weekOptions.sort((a, b) => b.rawDate - a.rawDate);
+      
+      // 🆕 Log para debug
+      console.log('📅 [WeekSelector] Semanas ordenadas:', weekOptions.map(w => `${w.displayName} (${w.weekDate})`));
       
       setAvailableWeeks(weekOptions);
       console.log('📅 [WeekSelector] Semanas carregadas:', weekOptions.length);
@@ -63,24 +95,6 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
       console.error('❌ [WeekSelector] Erro ao carregar semanas:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Converter formato "16/06" para sábado da semana
-  const convertSemanaToSaturday = (semanaStr) => {
-    try {
-      // semanaStr vem como "16/06" (DD/MM)
-      const [day, month] = semanaStr.split('/');
-      const currentYear = new Date().getFullYear();
-      
-      // Criar data assumindo o ano atual
-      const date = new Date(currentYear, parseInt(month) - 1, parseInt(day));
-      
-      // Encontrar o sábado dessa semana
-      return getWeekSaturday(date);
-    } catch (error) {
-      console.warn('⚠️ [WeekSelector] Erro ao converter semana:', semanaStr, error);
-      return null;
     }
   };
 
