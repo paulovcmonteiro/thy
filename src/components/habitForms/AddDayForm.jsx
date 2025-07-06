@@ -1,11 +1,9 @@
 // components/forms/AddDayForm.jsx - FORMULÁRIO COM AUTO-SAVE + HUMOR
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Calendar, Save, Check, AlertCircle, Clock } from 'lucide-react';
-import useDashboardData from '../../hooks/useDashboardData';
 import { getDayHabits } from '../../firebase/habitsService';
 
-const AddDayForm = ({ isOpen, onClose }) => {
-  const { addNewDay, refreshData } = useDashboardData();
+const AddDayForm = ({ isOpen, onClose, addNewDay, refreshData }) => {
 
   // 🆕 FUNÇÃO: RECUPERAR ÚLTIMA DATA USADA
   const getInitialDate = () => {

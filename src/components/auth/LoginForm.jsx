@@ -1,4 +1,4 @@
-// src/components/auth/LoginForm.jsx
+// src/components/auth/LoginForm.jsx - COM LOGO IMAGEM
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
@@ -27,10 +27,14 @@ const LoginForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         
-        {/* Cabeçalho com Thy bem grande */}
+        {/* Cabeçalho com logo Thy bem grande */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
-            <h1 className="text-6xl font-bold text-[#4682B4] tracking-wide">Thy</h1>
+            <img 
+              src="/assets/thy-logo.png" 
+              alt="Thy" 
+              className="h-24 w-auto"
+            />
           </div>
           <p className="text-gray-600 text-lg">
             {isRegistering ? 'Crie sua conta' : 'Entre na sua conta'}

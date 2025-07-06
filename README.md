@@ -35,7 +35,7 @@ src/
 │   │   ├── ProgressOverviewSection.jsx # Gráficos de evolução geral (completude e peso)
 │   │   ├── HabitPerformanceSection.jsx # Performance detalhada de cada hábito individual
 │   │   ├── HabitInsightsSection.jsx    # Insights automáticos e destaques por hábito
-│   │   ├── WeeklyReviewSection.jsx     # Análise detalhada da última semana
+│   │   ├── WeeklyDebriefingSection.jsx     # Análise detalhada da última semana
 │   │   └── WeeklySummarySection.jsx    # Resumo geral com médias e destaques
 │   ├── visualizations/         # Gráficos customizados (ex: CompletionChart, WeightChart)
 │   └── commonUI/               # Componentes de UI reutilizáveis (ex: CollapsibleSection)
@@ -91,7 +91,7 @@ Responsável por:
   - Médias gerais de completude
   - Tendência de peso
   - Destaques e classificações por hábito
-- **WeeklyReviewSection.jsx**: Faz uma análise detalhada da última semana registrada, mostrando:
+- **WeeklyDebriefingSection.jsx**: Faz uma análise detalhada da última semana registrada, mostrando:
   - Comparação com a média geral
   - Destaques, sucessos, desafios e recomendações
   - Evolução e padrões identificados
