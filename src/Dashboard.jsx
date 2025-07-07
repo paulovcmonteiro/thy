@@ -10,9 +10,11 @@ import HabitPerformanceSection from './components/dashboardSections/HabitPerform
 import HabitInsightsSection from './components/dashboardSections/HabitInsightsSection';
 import MobileBottomNav from './components/navigation/MobileBottomNav';
 import useDashboardData from './hooks/useDashboardData';
+import useDebriefingVisibility from './hooks/useDebriefingVisibility';
 
 const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
   const { data, loading, error, refreshData, addNewDay } = useDashboardData();
+  const { shouldShowButton: shouldShowDebriefingButton, refresh: refreshDebriefingVisibility } = useDebriefingVisibility();
   
   // Estados para controlar modais
   const [showAddDayForm, setShowAddDayForm] = useState(false);
@@ -148,6 +150,22 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         return 'Semana Atual';
     }
   };
+
+  // Função para obter subtítulo da seção atual (desktop)
+  const getSectionSubtitle = () => {
+    switch(currentSection) {
+      case 'semana-anterior':
+        return 'Análise e debriefing das semanas passadas';
+      case 'evolucao-geral':
+        return 'Progresso ao longo do tempo';
+      case 'performance-habito':
+        return 'Análise detalhada por hábito';
+      case 'insights-principais':
+        return 'Descobertas e padrões identificados';
+      default:
+        return 'Análise detalhada dos seus hábitos';
+    }
+  };
   
   // Loading state
   if (loading) {
@@ -179,11 +197,12 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-6xl mx-auto p-4 lg:p-6 bg-gray-50 min-h-screen">
       
       {/* Mobile Bottom Navigation - INLINE PARA GARANTIR FUNCIONAMENTO */}
       <div className="lg:hidden">
-        <div className="h-20"></div>
+        {/* Espaçador reduzido - era h-20, agora h-16 */}
+        <div className="h-16"></div>
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-1 py-2 z-30">
           <div className="flex items-center justify-around">
             {[
@@ -214,39 +233,71 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
 
       {/* TÍTULO - Apenas no desktop quando não for Semana Atual */}
       {currentSection !== 'semana-atual' && (
-        <div className="hidden lg:block mb-8">
+        <div className="hidden lg:block mb-6">
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
             {getSectionTitle()}
           </h1>
           <p className="text-gray-600 mt-1">
-            Análise detalhada dos seus hábitos
+            {getSectionSubtitle()}
           </p>
         </div>
       )}
 
-      {/* SEÇÃO DE BOTÕES PRINCIPAIS - Sempre aparecem quando estiver na dashboard mobile ou na Semana Atual (desktop) */}
-      {(currentMobileSection === 'dashboard' || currentMobileSection === 'semana-atual' || currentSection === 'semana-atual') && (
-        <div className="flex flex-col lg:flex-row justify-center items-center gap-4 mb-8">
-          <button
-            onClick={() => setShowAddDayForm(true)}
-            className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium w-full lg:w-auto"
-          >
-            <Plus className="w-6 h-6" />
-            Adicionar Hoje
-          </button>
+      {/* SEÇÃO DE BOTÕES PRINCIPAIS - SÓ NA SEMANA ATUAL */}
+      <div className="flex flex-col lg:flex-row justify-center items-center gap-4 mb-4 lg:mb-8">
+        {/* Desktop: só mostra quando currentSection === 'semana-atual' */}
+        {currentSection === 'semana-atual' && (
+          <div className="hidden lg:flex flex-row justify-center items-center gap-4 w-full">
+            {/* Botão Adicionar Dia */}
+            <button
+              onClick={() => setShowAddDayForm(true)}
+              className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium"
+            >
+              <Plus className="w-6 h-6" />
+              Adicionar Dia
+            </button>
 
-          <button
-            onClick={() => setShowWeeklyDebriefing(true)}
-            className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium w-full lg:w-auto"
-          >
-            <BarChart3 className="w-6 h-6" />
-            Análise Semanal
-          </button>
-        </div>
-      )}
+            {/* Botão Debriefing - só aparece quando necessário */}
+            {shouldShowDebriefingButton && (
+              <button
+                onClick={() => setShowWeeklyDebriefing(true)}
+                className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
+              >
+                <BarChart3 className="w-6 h-6" />
+                Debriefing da Semana
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Mobile: só mostra quando estiver na semana-atual ou dashboard */}
+        {(currentMobileSection === 'semana-atual' || currentMobileSection === 'dashboard') && (
+          <div className="lg:hidden flex flex-col justify-center items-center gap-4 w-full">
+            {/* Botão Adicionar Dia */}
+            <button
+              onClick={() => setShowAddDayForm(true)}
+              className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium w-full"
+            >
+              <Plus className="w-6 h-6" />
+              Adicionar Dia
+            </button>
+
+            {/* Botão Debriefing - só aparece quando necessário */}
+            {shouldShowDebriefingButton && (
+              <button
+                onClick={() => setShowWeeklyDebriefing(true)}
+                className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium w-full"
+              >
+                <BarChart3 className="w-6 h-6" />
+                Debriefing da Semana
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6">
         {/* Desktop: Renderiza seção baseada no sidebar */}
         <div className="hidden lg:block">
           {renderDesktopSection()}
@@ -274,7 +325,11 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
       {showWeeklyDebriefing && (
         <WeeklyDebriefingForm
           isOpen={showWeeklyDebriefing}
-          onClose={() => setShowWeeklyDebriefing(false)}
+          onClose={() => {
+            setShowWeeklyDebriefing(false);
+            // Atualizar visibilidade do botão após fechar o debriefing
+            refreshDebriefingVisibility();
+          }}
         />
       )}
     </div>
