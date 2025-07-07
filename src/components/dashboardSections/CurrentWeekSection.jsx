@@ -140,46 +140,22 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg mb-8">
-      {/* Header clicável */}
-      <div 
-        className="p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
-        onClick={toggleSection}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <Calendar className="text-blue-600" />
-            📅 Semana Atual
-          </h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
-              {daysWithData.length} {daysWithData.length === 1 ? 'dia' : 'dias'}
-            </span>
-            <Clock 
-              className={`w-5 h-5 text-gray-400 transform transition-transform ${
-                isExpanded ? 'rotate-180' : ''
-              }`} 
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Conteúdo colapsível */}
-      {isExpanded && (
-        <div className="p-6">
+      {/* Conteúdo sempre visível */}
+      <div className="p-6">
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full">
               
               {/* Cabeçalho com dias da semana */}
               <thead>
                 <tr>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">
-                    Hábito
+                  <th className="text-left py-4 px-4 lg:px-6">
+                    {/* Cabeçalho vazio para a coluna dos hábitos */}
                   </th>
                   {daysWithData.map(day => (
-                    <th key={day.dayInfo.date} className="text-center py-3 px-2 font-semibold text-gray-700 border-b-2 border-gray-200">
+                    <th key={day.dayInfo.date} className="text-center py-4 px-2">
                       <div className="flex flex-col items-center">
-                        <span className="text-sm">{day.dayInfo.dayName}</span>
-                        <span className={`text-lg ${day.dayInfo.isToday ? 'text-blue-600 font-bold' : 'text-gray-600'}`}>
+                        <span className="text-sm font-medium text-gray-600">{day.dayInfo.dayName}</span>
+                        <span className={`text-xl font-bold ${day.dayInfo.isToday ? 'text-blue-600' : 'text-gray-700'}`}>
                           {day.dayInfo.dayNumber}
                         </span>
                       </div>
@@ -191,19 +167,19 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
               <tbody>
                 
                 {/* Linha do Peso */}
-                <tr className="border-b border-gray-100">
-                  <td className="py-3 px-4 font-medium text-gray-700 flex items-center gap-2">
-                    <span className="text-xl">⚖️</span>
-                    <span>Peso</span>
+                <tr>
+                  <td className="py-4 px-4 lg:px-6 font-medium text-gray-700 flex items-center gap-3">
+                    <span className="text-3xl lg:text-4xl">⚖️</span>
+                    <span className="text-lg lg:text-xl">Peso</span>
                   </td>
                   {daysWithData.map(day => (
-                    <td key={day.dayInfo.date} className="text-center py-3 px-2">
+                    <td key={day.dayInfo.date} className="text-center py-4 px-2">
                       {day.peso ? (
-                        <span className="text-sm font-medium text-gray-800 bg-blue-50 px-2 py-1 rounded">
+                        <span className="text-sm lg:text-base font-medium text-gray-800 bg-blue-50 px-3 py-2 rounded-lg">
                           {day.peso}kg
                         </span>
                       ) : (
-                        <span className="text-gray-300">-</span>
+                        <span className="text-gray-300 text-xl">-</span>
                       )}
                     </td>
                   ))}
@@ -211,21 +187,21 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
 
                 {/* Linhas dos Hábitos */}
                 {habitsList.map(habit => (
-                  <tr key={habit.key} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-700 flex items-center gap-2">
-                      <span className="text-xl">{habit.label}</span>
-                      <span>{habit.name}</span>
+                  <tr key={habit.key} className="hover:bg-gray-50">
+                    <td className="py-4 px-4 lg:px-6 font-medium text-gray-700 flex items-center gap-3">
+                      <span className="text-3xl lg:text-4xl">{habit.label}</span>
+                      <span className="text-lg lg:text-xl">{habit.name}</span>
                     </td>
                     {daysWithData.map(day => (
-                      <td key={day.dayInfo.date} className="text-center py-3 px-2">
+                      <td key={day.dayInfo.date} className="text-center py-4 px-2">
                         {day[habit.key] ? (
-                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <div className="w-7 h-7 lg:w-8 lg:h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+                            <svg className="w-4 h-4 lg:w-5 lg:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
                         ) : (
-                          <div className="w-6 h-6 bg-gray-100 rounded-full mx-auto"></div>
+                          <div className="w-7 h-7 lg:w-8 lg:h-8 bg-gray-100 rounded-full mx-auto"></div>
                         )}
                       </td>
                     ))}
@@ -233,19 +209,19 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
                 ))}
 
                 {/* Linha de Sentimento */}
-                <tr className="border-b border-gray-100">
-                  <td className="py-3 px-4 font-medium text-gray-700 flex items-center gap-2">
-                    <span className="text-xl">💭</span>
-                    <span>Sentimento</span>
+                <tr>
+                  <td className="py-4 px-4 lg:px-6 font-medium text-gray-700 flex items-center gap-3">
+                    <span className="text-3xl lg:text-4xl">💭</span>
+                    <span className="text-lg lg:text-xl">Sentimento</span>
                   </td>
                   {daysWithData.map(day => (
-                    <td key={day.dayInfo.date} className="text-center py-3 px-2">
+                    <td key={day.dayInfo.date} className="text-center py-4 px-2">
                       {day.sentimento && sentimentEmojis[day.sentimento] ? (
-                        <span className="text-2xl">
+                        <span className="text-2xl lg:text-3xl">
                           {sentimentEmojis[day.sentimento]}
                         </span>
                       ) : (
-                        <span className="text-gray-300">-</span>
+                        <span className="text-gray-300 text-xl">-</span>
                       )}
                     </td>
                   ))}
@@ -256,19 +232,16 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
           </div>
 
           {/* Rodapé com informações */}
-          <div className="mt-4 text-sm text-gray-500 flex items-center justify-between">
-            <span>
-              Última atualização: {new Date().toLocaleString('pt-BR')}
-            </span>
+          <div className="mt-6 flex items-center justify-center">
             <button 
               onClick={loadCurrentWeekData}
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Atualizar
+              + Dia
             </button>
           </div>
         </div>
-      )}
+      )
     </div>
   );
 };
