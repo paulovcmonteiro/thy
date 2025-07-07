@@ -1,101 +1,29 @@
-// src/Dashboard.jsx - NOVA VERSÃO COM NAVEGAÇÃO LATERAL
+// src/Dashboard.jsx - VERSÃO MELHORADA PARA MOBILE
 import React, { useState } from 'react';
 import { Plus, BarChart3 } from 'lucide-react';
-
-// Hooks
-import useDashboardData from './hooks/useDashboardData';
-import useSidebar from './hooks/useSidebar';
-
-// Componentes de navegação
-import MobileBottomNav from './components/navigation/MobileBottomNav';
-
-// Formulários
 import AddDayForm from './components/habitForms/AddDayForm';
 import WeeklyDebriefingForm from './components/habitForms/WeeklyDebriefingForm';
-
-// Seções do dashboard
 import ProgressOverviewSection from './components/dashboardSections/ProgressOverviewSection';
 import WeeklyDebriefingSection from './components/dashboardSections/WeeklyDebriefingSection';
 import HabitPerformanceSection from './components/dashboardSections/HabitPerformanceSection';
 import HabitInsightsSection from './components/dashboardSections/HabitInsightsSection';
-// Nota: WeeklySummarySection foi removido conforme solicitado
+import WeeklySummarySection from './components/dashboardSections/WeeklySummarySection';
+import useDashboardData from './hooks/useDashboardData';
 
 const Dashboard = () => {
-  // Hooks de dados e navegação
   const { data, loading, error, refreshData, addNewDay } = useDashboardData();
-  const { currentSection, navigateToSection } = useSidebar();
   
   // Estados para controlar modais
   const [showAddDayForm, setShowAddDayForm] = useState(false);
   const [showWeeklyDebriefing, setShowWeeklyDebriefing] = useState(false);
-
-  // Função para renderizar a seção atual
-  const renderCurrentSection = () => {
-    switch (currentSection) {
-      case 'ultima-semana':
-        return (
-          <div className="space-y-8">
-            {/* Foco na semana atual - Seção padrão quando entra */}
-            <WeeklyDebriefingSection 
-              data={data} 
-              isExpanded={true} // Sempre expandido na view focada
-              onToggle={() => {}} // Não precisa de toggle na view focada
-            />
-          </div>
-        );
-      
-      case 'evolucao-geral':
-        return (
-          <ProgressOverviewSection 
-            data={data} 
-            isExpanded={true}
-            onToggle={() => {}}
-          />
-        );
-      
-      case 'performance-habito':
-        return (
-          <HabitPerformanceSection 
-            data={data} 
-            isExpanded={true}
-            onToggle={() => {}}
-          />
-        );
-      
-      case 'insights-principais':
-        return (
-          <HabitInsightsSection 
-            data={data} 
-            isExpanded={true}
-            onToggle={() => {}}
-          />
-        );
-      
-      default:
-        return (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Seção não encontrada</p>
-          </div>
-        );
-    }
-  };
-
-  // Função para obter o título da seção atual
-  const getSectionTitle = () => {
-    switch (currentSection) {
-      case 'ultima-semana':
-        return 'Última Semana';
-      case 'evolucao-geral':
-        return 'Evolução Geral';
-      case 'performance-habito':
-        return 'Performance por Hábito';
-      case 'insights-principais':
-        return 'Insights Principais';
-      default:
-        return 'Dashboard';
-    }
-  };
-
+  
+  // Estados para controlar expansão das seções
+  const [isProgressExpanded, setIsProgressExpanded] = useState(false);
+  const [isDebriefingExpanded, setIsDebriefingExpanded] = useState(false);
+  const [isPerformanceExpanded, setIsPerformanceExpanded] = useState(false);
+  const [isInsightsExpanded, setIsInsightsExpanded] = useState(false);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  
   // Loading state
   if (loading) {
     return (
@@ -126,75 +54,87 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav 
-        currentSection={currentSection}
-        onNavigate={navigateToSection}
-      />
-
-      {/* Conteúdo Principal */}
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header da página */}
-        <div className="flex items-center justify-between mb-8">
-          {/* Título da seção atual */}
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
-              {getSectionTitle()}
-            </h1>
-            {currentSection === 'ultima-semana' && (
-              <p className="text-gray-600 mt-1">
-                Foco nos seus objetivos atuais
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Botões de Ação Principal */}
-        <div className="flex flex-col lg:flex-row justify-center items-center gap-4 my-8 w-full">
-          {/* Botão Adicionar Hoje */}
-          <button
-            onClick={() => setShowAddDayForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-xl lg:text-2xl px-8 lg:px-10 py-6 lg:py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-3 lg:gap-4 font-bold w-full max-w-md lg:max-w-xl justify-center"
-            style={{ minHeight: '80px' }}
-          >
-            <Plus size={32} />
-            Adicionar Hoje
-          </button>
-          
-          {/* Botão Debriefing da Semana */}
-          <button
-            onClick={() => setShowWeeklyDebriefing(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white text-xl lg:text-2xl px-8 lg:px-10 py-6 lg:py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-3 lg:gap-4 font-bold w-full max-w-md lg:max-w-xl justify-center"
-            style={{ minHeight: '80px' }}
-          >
-            <BarChart3 size={32} />
-            Debriefing da Semana
-          </button>
-        </div>
-
-        {/* Conteúdo da Seção Atual */}
-        <div className="space-y-8">
-          {renderCurrentSection()}
-        </div>
-
-        {/* Modais */}
-        {showAddDayForm && (
-          <AddDayForm
-            isOpen={showAddDayForm}
-            onClose={() => setShowAddDayForm(false)}
-            onSubmit={addNewDay}
-            existingDays={data?.existingDays || []}
-          />
-        )}
-
-        {showWeeklyDebriefing && (
-          <WeeklyDebriefingForm
-            isOpen={showWeeklyDebriefing}
-            onClose={() => setShowWeeklyDebriefing(false)}
-          />
-        )}
+    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+      
+      {/* TÍTULO - Apenas no desktop */}
+      <div className="hidden lg:block mb-8">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
+          Última Semana
+        </h1>
+        <p className="text-gray-600 mt-1">
+          Foco nos seus objetivos atuais
+        </p>
       </div>
+
+      {/* SEÇÃO DE BOTÕES PRINCIPAIS */}
+      <div className="flex flex-col lg:flex-row justify-center items-center gap-4 mb-8 w-full">
+        
+        {/* Botão Update do Dia */}
+        <button
+          onClick={() => setShowAddDayForm(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xl lg:text-2xl px-8 lg:px-10 py-6 lg:py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-3 lg:gap-4 font-bold w-full max-w-md lg:max-w-xl justify-center"
+          style={{ minHeight: '80px' }}
+        >
+          <Plus size={32} />
+          + Update do dia
+        </button>
+        
+        {/* Botão Debriefing da Semana */}
+        <button
+          onClick={() => setShowWeeklyDebriefing(true)}
+          className="bg-purple-600 hover:bg-purple-700 text-white text-xl lg:text-2xl px-8 lg:px-10 py-6 lg:py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-3 lg:gap-4 font-bold w-full max-w-md lg:max-w-xl justify-center"
+          style={{ minHeight: '80px' }}
+        >
+          <BarChart3 size={32} />
+          Debriefing da Semana
+        </button>
+      </div>
+
+      {/* CONTEÚDO PRINCIPAL */}
+      <div className="space-y-8">
+        <ProgressOverviewSection 
+          data={data} 
+          isExpanded={isProgressExpanded}
+          onToggle={() => setIsProgressExpanded(!isProgressExpanded)}
+        />
+        <WeeklyDebriefingSection 
+          data={data} 
+          isExpanded={isDebriefingExpanded}
+          onToggle={() => setIsDebriefingExpanded(!isDebriefingExpanded)}
+        />
+        <HabitPerformanceSection 
+          data={data} 
+          isExpanded={isPerformanceExpanded}
+          onToggle={() => setIsPerformanceExpanded(!isPerformanceExpanded)}
+        />
+        <HabitInsightsSection 
+          data={data} 
+          isExpanded={isInsightsExpanded}
+          onToggle={() => setIsInsightsExpanded(!isInsightsExpanded)}
+        />
+        <WeeklySummarySection 
+          data={data} 
+          isExpanded={isSummaryExpanded}
+          onToggle={() => setIsSummaryExpanded(!isSummaryExpanded)}
+        />
+      </div>
+
+      {/* MODAIS */}
+      {showAddDayForm && (
+        <AddDayForm
+          isOpen={showAddDayForm}
+          onClose={() => setShowAddDayForm(false)}
+          onSubmit={addNewDay}
+          existingDays={data?.existingDays || []}
+        />
+      )}
+
+      {showWeeklyDebriefing && (
+        <WeeklyDebriefingForm
+          isOpen={showWeeklyDebriefing}
+          onClose={() => setShowWeeklyDebriefing(false)}
+        />
+      )}
     </div>
   );
 };
