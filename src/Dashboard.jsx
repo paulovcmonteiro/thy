@@ -1,4 +1,4 @@
-// src/Dashboard.jsx - VERSÃO SIMPLES SEM MENU DUPLICADO
+// src/Dashboard.jsx - VERSÃO CORRIGIDA - Recebe currentSection como prop
 import React, { useState } from 'react';
 import { Plus, BarChart3 } from 'lucide-react';
 import AddDayForm from './components/habitForms/AddDayForm';
@@ -10,13 +10,12 @@ import HabitInsightsSection from './components/dashboardSections/HabitInsightsSe
 import WeeklySummarySection from './components/dashboardSections/WeeklySummarySection';
 import MobileBottomNav from './components/navigation/MobileBottomNav';
 import useDashboardData from './hooks/useDashboardData';
-import useSidebar from './hooks/useSidebar';
 
-const Dashboard = () => {
+const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection como prop
   const { data, loading, error, refreshData, addNewDay } = useDashboardData();
   
-  // Hook do sidebar existente (conecta com o menu que já existe)
-  const { currentSection } = useSidebar();
+  // ❌ REMOVIDO: Hook do sidebar existente - agora vem como prop
+  // const { currentSection } = useSidebar();
   
   // Estados para controlar modais
   const [showAddDayForm, setShowAddDayForm] = useState(false);
@@ -24,6 +23,9 @@ const Dashboard = () => {
 
   // Estado para navegação mobile apenas
   const [currentMobileSection, setCurrentMobileSection] = useState('dashboard');
+
+  // 🔍 Debug: vamos manter temporariamente para confirmar que funciona
+  console.log('🔍 Dashboard renderizou - currentSection atual:', currentSection);
 
   // Função para navegar entre seções (mobile)
   const handleMobileNavigation = (sectionId) => {
