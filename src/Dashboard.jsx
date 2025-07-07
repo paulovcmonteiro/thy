@@ -1,4 +1,4 @@
-// src/Dashboard.jsx - VERSÃO MELHORADA PARA MOBILE
+// src/Dashboard.jsx - VERSÃO SIMPLES SEM MENU DUPLICADO
 import React, { useState } from 'react';
 import { Plus, BarChart3 } from 'lucide-react';
 import AddDayForm from './components/habitForms/AddDayForm';
@@ -8,21 +8,123 @@ import WeeklyDebriefingSection from './components/dashboardSections/WeeklyDebrie
 import HabitPerformanceSection from './components/dashboardSections/HabitPerformanceSection';
 import HabitInsightsSection from './components/dashboardSections/HabitInsightsSection';
 import WeeklySummarySection from './components/dashboardSections/WeeklySummarySection';
+import MobileBottomNav from './components/navigation/MobileBottomNav';
 import useDashboardData from './hooks/useDashboardData';
+import useSidebar from './hooks/useSidebar';
 
 const Dashboard = () => {
   const { data, loading, error, refreshData, addNewDay } = useDashboardData();
   
+  // Hook do sidebar existente (conecta com o menu que já existe)
+  const { currentSection } = useSidebar();
+  
   // Estados para controlar modais
   const [showAddDayForm, setShowAddDayForm] = useState(false);
   const [showWeeklyDebriefing, setShowWeeklyDebriefing] = useState(false);
-  
-  // Estados para controlar expansão das seções
-  const [isProgressExpanded, setIsProgressExpanded] = useState(false);
-  const [isDebriefingExpanded, setIsDebriefingExpanded] = useState(false);
-  const [isPerformanceExpanded, setIsPerformanceExpanded] = useState(false);
-  const [isInsightsExpanded, setIsInsightsExpanded] = useState(false);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+
+  // Estado para navegação mobile apenas
+  const [currentMobileSection, setCurrentMobileSection] = useState('dashboard');
+
+  // Função para navegar entre seções (mobile)
+  const handleMobileNavigation = (sectionId) => {
+    setCurrentMobileSection(sectionId);
+  };
+
+  // Função para renderizar seção atual (desktop)
+  const renderDesktopSection = () => {
+    switch(currentSection) {
+      case 'evolucao-geral':
+        return (
+          <ProgressOverviewSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'performance-habito':
+        return (
+          <HabitPerformanceSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'insights-principais':
+        return (
+          <HabitInsightsSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'ultima-semana':
+      default:
+        return (
+          <WeeklyDebriefingSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+    }
+  };
+
+  // Função para renderizar seção atual (mobile)
+  const renderMobileSection = () => {
+    switch(currentMobileSection) {
+      case 'evolucao-geral':
+        return (
+          <ProgressOverviewSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'performance-habito':
+        return (
+          <HabitPerformanceSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'insights-principais':
+        return (
+          <HabitInsightsSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'ultima-semana':
+        return (
+          <WeeklyDebriefingSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'dashboard':
+      default:
+        // Dashboard: só os botões, nenhuma seção
+        return null;
+    }
+  };
+
+  // Função para obter título da seção atual (desktop)
+  const getSectionTitle = () => {
+    switch(currentSection) {
+      case 'evolucao-geral':
+        return 'Evolução Geral';
+      case 'performance-habito':
+        return 'Performance por Hábito';
+      case 'insights-principais':
+        return 'Insights Principais';
+      case 'ultima-semana':
+      default:
+        return 'Última Semana';
+    }
+  };
   
   // Loading state
   if (loading) {
@@ -56,10 +158,16 @@ const Dashboard = () => {
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
       
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav 
+        currentSection={currentMobileSection}
+        onNavigate={handleMobileNavigation}
+      />
+
       {/* TÍTULO - Apenas no desktop */}
       <div className="hidden lg:block mb-8">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
-          Última Semana
+          {getSectionTitle()}
         </h1>
         <p className="text-gray-600 mt-1">
           Foco nos seus objetivos atuais
@@ -91,32 +199,14 @@ const Dashboard = () => {
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="space-y-8">
-        <ProgressOverviewSection 
-          data={data} 
-          isExpanded={isProgressExpanded}
-          onToggle={() => setIsProgressExpanded(!isProgressExpanded)}
-        />
-        <WeeklyDebriefingSection 
-          data={data} 
-          isExpanded={isDebriefingExpanded}
-          onToggle={() => setIsDebriefingExpanded(!isDebriefingExpanded)}
-        />
-        <HabitPerformanceSection 
-          data={data} 
-          isExpanded={isPerformanceExpanded}
-          onToggle={() => setIsPerformanceExpanded(!isPerformanceExpanded)}
-        />
-        <HabitInsightsSection 
-          data={data} 
-          isExpanded={isInsightsExpanded}
-          onToggle={() => setIsInsightsExpanded(!isInsightsExpanded)}
-        />
-        <WeeklySummarySection 
-          data={data} 
-          isExpanded={isSummaryExpanded}
-          onToggle={() => setIsSummaryExpanded(!isSummaryExpanded)}
-        />
+      {/* Desktop: Mostra apenas uma seção */}
+      <div className="hidden lg:block">
+        {renderDesktopSection()}
+      </div>
+
+      {/* Mobile: Mostra seção atual OU dashboard limpo */}
+      <div className="lg:hidden">
+        {renderMobileSection()}
       </div>
 
       {/* MODAIS */}
