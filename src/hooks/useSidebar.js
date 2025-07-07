@@ -5,8 +5,8 @@ const useSidebar = () => {
   // Estado do menu lateral (aberto/fechado)
   const [isOpen, setIsOpen] = useState(false);
   
-  // Seção atualmente ativa
-  const [currentSection, setCurrentSection] = useState('ultima-semana');
+  // Seção atualmente ativa - MUDANÇA: 'semana-atual' é agora a padrão
+  const [currentSection, setCurrentSection] = useState('semana-atual');
   
   // Carrega preferência do usuário do localStorage na inicialização
   useEffect(() => {

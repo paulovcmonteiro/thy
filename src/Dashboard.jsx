@@ -1,31 +1,25 @@
-// src/Dashboard.jsx - VERSÃO CORRIGIDA - Recebe currentSection como prop
+// src/Dashboard.jsx - VERSÃO CORRIGIDA COM SEMANA ATUAL
 import React, { useState } from 'react';
 import { Plus, BarChart3 } from 'lucide-react';
 import AddDayForm from './components/habitForms/AddDayForm';
 import WeeklyDebriefingForm from './components/habitForms/WeeklyDebriefingForm';
+import CurrentWeekSection from './components/dashboardSections/CurrentWeekSection';
 import ProgressOverviewSection from './components/dashboardSections/ProgressOverviewSection';
 import WeeklyDebriefingSection from './components/dashboardSections/WeeklyDebriefingSection';
 import HabitPerformanceSection from './components/dashboardSections/HabitPerformanceSection';
 import HabitInsightsSection from './components/dashboardSections/HabitInsightsSection';
-import WeeklySummarySection from './components/dashboardSections/WeeklySummarySection';
 import MobileBottomNav from './components/navigation/MobileBottomNav';
 import useDashboardData from './hooks/useDashboardData';
 
-const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection como prop
+const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
   const { data, loading, error, refreshData, addNewDay } = useDashboardData();
-  
-  // ❌ REMOVIDO: Hook do sidebar existente - agora vem como prop
-  // const { currentSection } = useSidebar();
   
   // Estados para controlar modais
   const [showAddDayForm, setShowAddDayForm] = useState(false);
   const [showWeeklyDebriefing, setShowWeeklyDebriefing] = useState(false);
 
   // Estado para navegação mobile apenas
-  const [currentMobileSection, setCurrentMobileSection] = useState('dashboard');
-
-  // 🔍 Debug: vamos manter temporariamente para confirmar que funciona
-  console.log('🔍 Dashboard renderizou - currentSection atual:', currentSection);
+  const [currentMobileSection, setCurrentMobileSection] = useState('semana-atual');
 
   // Função para navegar entre seções (mobile)
   const handleMobileNavigation = (sectionId) => {
@@ -35,6 +29,22 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
   // Função para renderizar seção atual (desktop)
   const renderDesktopSection = () => {
     switch(currentSection) {
+      case 'semana-atual':
+        return (
+          <CurrentWeekSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'semana-anterior':
+        return (
+          <WeeklyDebriefingSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
       case 'evolucao-geral':
         return (
           <ProgressOverviewSection 
@@ -59,10 +69,10 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
             onToggle={() => {}}
           />
         );
-      case 'ultima-semana':
       default:
+        // Fallback para semana atual
         return (
-          <WeeklyDebriefingSection 
+          <CurrentWeekSection 
             data={data} 
             isExpanded={true}
             onToggle={() => {}}
@@ -74,6 +84,22 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
   // Função para renderizar seção atual (mobile)
   const renderMobileSection = () => {
     switch(currentMobileSection) {
+      case 'semana-atual':
+        return (
+          <CurrentWeekSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
+      case 'semana-anterior':
+        return (
+          <WeeklyDebriefingSection 
+            data={data} 
+            isExpanded={true}
+            onToggle={() => {}}
+          />
+        );
       case 'evolucao-geral':
         return (
           <ProgressOverviewSection 
@@ -93,14 +119,6 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
       case 'insights-principais':
         return (
           <HabitInsightsSection 
-            data={data} 
-            isExpanded={true}
-            onToggle={() => {}}
-          />
-        );
-      case 'ultima-semana':
-        return (
-          <WeeklyDebriefingSection 
             data={data} 
             isExpanded={true}
             onToggle={() => {}}
@@ -116,15 +134,18 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
   // Função para obter título da seção atual (desktop)
   const getSectionTitle = () => {
     switch(currentSection) {
+      case 'semana-atual':
+        return 'Semana Atual';
+      case 'semana-anterior':
+        return 'Semana Anterior';
       case 'evolucao-geral':
         return 'Evolução Geral';
       case 'performance-habito':
         return 'Performance por Hábito';
       case 'insights-principais':
         return 'Insights Principais';
-      case 'ultima-semana':
       default:
-        return 'Última Semana';
+        return 'Semana Atual';
     }
   };
   
@@ -160,55 +181,81 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
       
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav 
-        currentSection={currentMobileSection}
-        onNavigate={handleMobileNavigation}
-      />
-
-      {/* TÍTULO - Apenas no desktop */}
-      <div className="hidden lg:block mb-8">
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
-          {getSectionTitle()}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Foco nos seus objetivos atuais
-        </p>
+      {/* Mobile Bottom Navigation - INLINE PARA GARANTIR FUNCIONAMENTO */}
+      <div className="lg:hidden">
+        <div className="h-20"></div>
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-1 py-2 z-30">
+          <div className="flex items-center justify-around">
+            {[
+              { id: 'semana-atual', label: 'Atual', icon: '📅' },
+              { id: 'semana-anterior', label: 'Anterior', icon: '📋' },
+              { id: 'evolucao-geral', label: 'Evolução', icon: '📈' },
+              { id: 'performance-habito', label: 'Performance', icon: '📊' },
+              { id: 'insights-principais', label: 'Insights', icon: '💡' }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleMobileNavigation(item.id)}
+                className={`
+                  flex flex-col items-center p-2 rounded-lg transition-colors duration-200 min-w-0 flex-1
+                  ${currentMobileSection === item.id 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-500'
+                  }
+                `}
+              >
+                <span className="text-lg mb-1">{item.icon}</span>
+                <span className="text-xs font-medium truncate">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* SEÇÃO DE BOTÕES PRINCIPAIS */}
-      <div className="flex flex-col lg:flex-row justify-center items-center gap-4 mb-8 w-full">
-        
-        {/* Botão Update do Dia */}
-        <button
-          onClick={() => setShowAddDayForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xl lg:text-2xl px-8 lg:px-10 py-6 lg:py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-3 lg:gap-4 font-bold w-full max-w-md lg:max-w-xl justify-center"
-          style={{ minHeight: '80px' }}
-        >
-          <Plus size={32} />
-          + Update do dia
-        </button>
-        
-        {/* Botão Debriefing da Semana */}
-        <button
-          onClick={() => setShowWeeklyDebriefing(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white text-xl lg:text-2xl px-8 lg:px-10 py-6 lg:py-8 rounded-3xl shadow-lg transition-all duration-200 flex items-center gap-3 lg:gap-4 font-bold w-full max-w-md lg:max-w-xl justify-center"
-          style={{ minHeight: '80px' }}
-        >
-          <BarChart3 size={32} />
-          Debriefing da Semana
-        </button>
-      </div>
+      {/* TÍTULO - Apenas no desktop quando não for Semana Atual */}
+      {currentSection !== 'semana-atual' && (
+        <div className="hidden lg:block mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
+            {getSectionTitle()}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Análise detalhada dos seus hábitos
+          </p>
+        </div>
+      )}
+
+      {/* SEÇÃO DE BOTÕES PRINCIPAIS - Sempre aparecem quando estiver na dashboard mobile ou na Semana Atual (desktop) */}
+      {(currentMobileSection === 'dashboard' || currentMobileSection === 'semana-atual' || currentSection === 'semana-atual') && (
+        <div className="flex flex-col lg:flex-row justify-center items-center gap-4 mb-8">
+          <button
+            onClick={() => setShowAddDayForm(true)}
+            className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium w-full lg:w-auto"
+          >
+            <Plus className="w-6 h-6" />
+            Adicionar Hoje
+          </button>
+
+          <button
+            onClick={() => setShowWeeklyDebriefing(true)}
+            className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium w-full lg:w-auto"
+          >
+            <BarChart3 className="w-6 h-6" />
+            Análise Semanal
+          </button>
+        </div>
+      )}
 
       {/* CONTEÚDO PRINCIPAL */}
-      {/* Desktop: Mostra apenas uma seção */}
-      <div className="hidden lg:block">
-        {renderDesktopSection()}
-      </div>
+      <div className="space-y-6">
+        {/* Desktop: Renderiza seção baseada no sidebar */}
+        <div className="hidden lg:block">
+          {renderDesktopSection()}
+        </div>
 
-      {/* Mobile: Mostra seção atual OU dashboard limpo */}
-      <div className="lg:hidden">
-        {renderMobileSection()}
+        {/* Mobile: Renderiza seção baseada na navegação mobile */}
+        <div className="lg:hidden">
+          {renderMobileSection()}
+        </div>
       </div>
 
       {/* MODAIS */}
@@ -216,7 +263,10 @@ const Dashboard = ({ currentSection }) => {  // ✅ Agora recebe currentSection 
         <AddDayForm
           isOpen={showAddDayForm}
           onClose={() => setShowAddDayForm(false)}
-          onSubmit={addNewDay}
+          onSubmit={async (dayData) => {
+            await addNewDay(dayData);
+            setShowAddDayForm(false);
+          }}
           existingDays={data?.existingDays || []}
         />
       )}

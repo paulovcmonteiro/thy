@@ -1,4 +1,4 @@
-// src/App.jsx - VERSÃO CORRIGIDA - Passa currentSection para Dashboard
+// src/App.jsx - VERSÃO CORRIGIDA COM LAYOUT FLEXBOX
 import React from 'react';
 import useAuth from './hooks/useAuth';
 import useSidebar from './hooks/useSidebar';
@@ -71,7 +71,6 @@ const App = () => {
 
         {/* Conteúdo principal (Dashboard) */}
         <div className="flex-1">
-          {/* ✅ MUDANÇA PRINCIPAL: Agora passa currentSection como prop */}
           <Dashboard currentSection={currentSection} />
         </div>
       </div>

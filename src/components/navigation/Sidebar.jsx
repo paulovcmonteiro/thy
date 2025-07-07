@@ -2,13 +2,19 @@
 import React from 'react';
 
 const Sidebar = ({ isOpen, currentSection, onNavigate, onClose, onLogout }) => {
-  // Definição dos itens do menu
+  // Definição dos itens do menu - ATUALIZADO com nova estrutura
   const menuItems = [
     { 
-      id: 'ultima-semana', 
-      label: 'Última Semana', 
+      id: 'semana-atual', 
+      label: 'Semana Atual', 
       icon: '📅',
-      description: 'Foco na semana atual'
+      description: 'Progresso da semana em andamento'
+    },
+    { 
+      id: 'semana-anterior', 
+      label: 'Semana Anterior', 
+      icon: '📋',
+      description: 'Análise da última semana completa'
     },
     { 
       id: 'evolucao-geral', 
@@ -64,10 +70,7 @@ const Sidebar = ({ isOpen, currentSection, onNavigate, onClose, onLogout }) => {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => {
-                console.log('Clicando em:', item.id);
-                onNavigate(item.id);
-              }}
+              onClick={() => onNavigate(item.id)}
               className={`
                 w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors duration-200
                 ${currentSection === item.id 

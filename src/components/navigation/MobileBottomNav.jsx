@@ -4,9 +4,14 @@ import React from 'react';
 const MobileBottomNav = ({ currentSection, onNavigate }) => {
   const mobileMenuItems = [
     { 
-      id: 'ultima-semana', 
-      label: 'Semana', 
+      id: 'semana-atual', 
+      label: 'Atual', 
       icon: '📅'
+    },
+    { 
+      id: 'semana-anterior', 
+      label: 'Anterior', 
+      icon: '📋'
     },
     { 
       id: 'evolucao-geral', 
@@ -31,7 +36,7 @@ const MobileBottomNav = ({ currentSection, onNavigate }) => {
       <div className="h-20"></div>
       
       {/* Bottom navigation fixo */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-30">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-1 py-2 z-30">
         <div className="flex items-center justify-around">
           {mobileMenuItems.map((item) => (
             <button
