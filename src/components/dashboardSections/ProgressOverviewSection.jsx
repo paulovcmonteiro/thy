@@ -78,7 +78,7 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6 overflow-hidden">
       {/* Header clicável */}
       <div 
         className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -105,28 +105,28 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
 
       {/* Conteúdo colapsível */}
       {isExpanded && (
-        <div className="p-4">
+        <div className="p-4 overflow-hidden">
           <div className="grid md:grid-cols-2 gap-6">
             
             {/* GRÁFICO DE COMPLETUDE */}
-            <div className="bg-white">
+            <div className="bg-white min-w-0">
               <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <TrendingUp className="text-green-600" />
                 📈 Evolução da Completude
               </h3>
               
               {/* Métricas */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="text-center">
-                  <div className="text-xl font-bold text-[#4682B4]">{completionMetrics.avgGeral}%</div>
+                  <div className="text-lg font-bold text-[#4682B4]">{completionMetrics.avgGeral}%</div>
                   <div className="text-xs text-gray-600">Média Geral</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-bold text-green-600">{completionMetrics.percentActive}%</div>
+                  <div className="text-lg font-bold text-green-600">{completionMetrics.percentActive}%</div>
                   <div className="text-xs text-gray-600">% Semanas Ativas</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-bold text-purple-600">{completionMetrics.avgActive}%</div>
+                  <div className="text-lg font-bold text-purple-600">{completionMetrics.avgActive}%</div>
                   <div className="text-xs text-gray-600">Média Ativas</div>
                 </div>
               </div>
@@ -176,7 +176,7 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
             </div>
 
             {/* GRÁFICO DE PESO */}
-            <div className="bg-white">
+            <div className="bg-white min-w-0">
               <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <Target className="text-orange-600" />
                 ⚖️ Evolução do Peso
@@ -184,19 +184,19 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
 
               {/* Métricas de Peso */}
               {weightTrend.hasData ? (
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-orange-600">
+                    <div className="text-lg font-bold text-orange-600">
                       {weightTrend.trend > 0 ? '+' : ''}{weightTrend.trend}kg
                     </div>
                     <div className="text-xs text-gray-600">Variação Total</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-gray-600">{weightTrend.firstWeight}kg</div>
+                    <div className="text-lg font-bold text-gray-600">{weightTrend.firstWeight}kg</div>
                     <div className="text-xs text-gray-600">Peso Inicial</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-gray-600">{weightTrend.lastWeight}kg</div>
+                    <div className="text-lg font-bold text-gray-600">{weightTrend.lastWeight}kg</div>
                     <div className="text-xs text-gray-600">Peso Atual</div>
                   </div>
                 </div>
