@@ -25,47 +25,45 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
     'produtivo': '🔥'
   };
 
-  // 🔧 FUNÇÃO CORRIGIDA: obter datas da semana atual (timezone Brasil)
+  // 🔧 FUNÇÃO TEMPORÁRIA: hardcode para resolver hoje
   const getCurrentWeekDates = () => {
-    // 🇧🇷 CORREÇÃO: Usar timezone do Brasil em vez de UTC
-    const today = new Date();
-    const brasiliaOffset = -3; // GMT-3 (horário de Brasília)
-    const utcTime = today.getTime() + (today.getTimezoneOffset() * 60000);
-    const brasiliaTime = new Date(utcTime + (brasiliaOffset * 3600000));
+    // 🚨 HARDCODE TEMPORÁRIO: Forçar hoje como 07/07/2025
+    const TODAY_HARDCODED = '2025-07-07'; // ← MUDAR ISSO AMANHÃ PARA '2025-07-08'
     
-    const currentDay = brasiliaTime.getDay(); // 0 = domingo, 1 = segunda, etc.
+    console.log('🚨 [HARDCODE] Hoje forçado:', TODAY_HARDCODED);
     
-    console.log('📅 [getCurrentWeekDates] Hoje (Brasília):', brasiliaTime.toISOString().split('T')[0]);
-    console.log('📅 [getCurrentWeekDates] Hoje (UTC):', today.toISOString().split('T')[0]);
+    const [year, month, day] = TODAY_HARDCODED.split('-').map(Number);
+    const todayDate = new Date(year, month - 1, day);
+    const currentDay = todayDate.getDay(); // 0 = domingo, 1 = segunda
+    
     console.log('📅 [getCurrentWeekDates] Dia da semana:', currentDay, ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][currentDay]);
     
     const weekDates = [];
     
-    // Calcular domingo da semana atual (usando horário de Brasília)
-    const sunday = new Date(brasiliaTime);
-    sunday.setDate(brasiliaTime.getDate() - currentDay);
+    // Calcular domingo da semana
+    const sundayDay = day - currentDay; // 7 - 1 = 6 (domingo = dia 6)
     
-    console.log('📅 [getCurrentWeekDates] Domingo da semana:', sunday.toISOString().split('T')[0]);
+    console.log('📅 [getCurrentWeekDates] Cálculo: dia', day, '- currentDay', currentDay, '= domingo dia', sundayDay);
     
-    // 🔧 CORREÇÃO: Gerar datas de domingo até hoje (INCLUINDO HOJE)
+    // Gerar datas do domingo até hoje
     for (let i = 0; i <= currentDay; i++) {
-      const date = new Date(sunday);
-      date.setDate(sunday.getDate() + i);
-      
+      const date = new Date(year, month - 1, sundayDay + i);
       const dateStr = date.toISOString().split('T')[0];
       const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i];
+      const dayOfMonth = date.getDate();
       
       weekDates.push({
         date: dateStr,
         dayName: dayName,
-        dayNumber: date.getDate(), // ← Pega o dia correto da data calculada
-        isToday: dateStr === brasiliaTime.toISOString().split('T')[0]
+        dayNumber: dayOfMonth,
+        isToday: dateStr === TODAY_HARDCODED
       });
       
-      console.log(`📅 [getCurrentWeekDates] Adicionado: ${dayName} ${date.getDate()} (${dateStr})`);
+      console.log(`📅 [getCurrentWeekDates] Adicionado: ${dayName} ${dayOfMonth} (${dateStr})`);
     }
     
     console.log('📅 [getCurrentWeekDates] Total de dias:', weekDates.length);
+    console.log('📅 [getCurrentWeekDates] Datas finais:', weekDates.map(d => `${d.dayName} ${d.dayNumber}`).join(', '));
     return weekDates;
   };
 
@@ -98,6 +96,13 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
           
           if (dayData.success && dayData.data) {
             console.log(`📊 [loadCurrentWeekData] Dados detalhados para ${dayInfo.date}:`, dayData.data);
+            
+            // 🆕 DEBUG: Verificar cada campo individualmente
+            console.log(`🔍 [DEBUG] ${dayInfo.date} - peso:`, dayData.data.peso);
+            console.log(`🔍 [DEBUG] ${dayInfo.date} - meditar:`, dayData.data.meditar);
+            console.log(`🔍 [DEBUG] ${dayInfo.date} - sentimento:`, dayData.data.sentimento);
+            console.log(`🔍 [DEBUG] ${dayInfo.date} - exercitar:`, dayData.data.exercitar);
+            
             weekData[dayInfo.date] = {
               ...dayData.data,
               dayInfo: dayInfo,
@@ -125,6 +130,17 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
       setCurrentWeekData(weekData);
       console.log('📅 [loadCurrentWeekData] Dados carregados:', weekData);
       
+      // 🆕 DEBUG: Verificar estrutura final dos dados
+      Object.entries(weekData).forEach(([date, dayData]) => {
+        console.log(`🔍 [FINAL] ${date}:`, {
+          hasData: dayData.hasData,
+          peso: dayData.peso,
+          meditar: dayData.meditar,
+          sentimento: dayData.sentimento,
+          exercitar: dayData.exercitar
+        });
+      });
+      
     } catch (error) {
       console.error('❌ [loadCurrentWeekData] Erro geral:', error);
     } finally {
@@ -143,7 +159,7 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
 
   console.log('📊 [CurrentWeekSection] Dias para exibir:', allDays.length);
   allDays.forEach(day => {
-    console.log(`📊 ${day.dayInfo.dayName} ${day.dayInfo.dayNumber}: ${day.hasData ? 'COM dados' : 'SEM dados'}`);
+    console.log(`📊 ${day.dayInfo.dayName} ${day.dayInfo.dayNumber} (${day.dayInfo.date}): ${day.hasData ? 'COM dados' : 'SEM dados'}`);
   });
 
   // Se não há dias (nem mesmo vazios), mostrar loading ou estado vazio
@@ -207,13 +223,22 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
                 </td>
                 {allDays.map(day => (
                   <td key={day.dayInfo.date} className="text-center py-4 px-2">
-                    {day.peso ? (
-                      <span className="text-sm lg:text-base font-medium text-gray-800 bg-blue-50 px-3 py-2 rounded-lg">
-                        {day.peso}kg
-                      </span>
-                    ) : (
-                      <span className="text-gray-300 text-xl">-</span>
-                    )}
+                    {(() => {
+                      console.log(`🔍 [RENDER] Peso para ${day.dayInfo.date}:`, day.peso);
+                      console.log(`🔍 [RENDER] Condição day.peso:`, !!day.peso);
+                      if (day.peso) {
+                        return (
+                          <span className="text-sm lg:text-base font-medium text-gray-800 bg-blue-50 px-3 py-2 rounded-lg">
+                            {day.peso}kg
+                          </span>
+                        );
+                      } else {
+                        console.log(`🔍 [RENDER] Peso vazio para ${day.dayInfo.date}, valor:`, day.peso);
+                        return (
+                          <span className="text-gray-300 text-xl">-</span>
+                        );
+                      }
+                    })()}
                   </td>
                 ))}
               </tr>
