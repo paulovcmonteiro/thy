@@ -1,4 +1,4 @@
-// src/App.jsx - VERSÃO CORRIGIDA COM LAYOUT FLEXBOX
+// src/App.jsx - LAYOUT SEM GAPS
 import React from 'react';
 import useAuth from './hooks/useAuth';
 import useSidebar from './hooks/useSidebar';
@@ -34,9 +34,9 @@ const App = () => {
     return <LoginForm />;
   }
 
-  // Se estiver logado, mostrar app principal com layout flexbox
+  // ✅ CORREÇÃO: Restaurar header mas sem espaçamento
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar (apenas desktop) */}
       <div className="hidden lg:block">
         <Sidebar 
@@ -50,8 +50,8 @@ const App = () => {
 
       {/* Container principal */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-gray-50">
+        {/* Header - MANTIDO mas sem espaçamento desnecessário */}
+        <header className="w-full flex items-center justify-between px-6 py-2 bg-gray-50 border-b border-gray-100">
           
           {/* Botão toggle - só aparece quando sidebar está fechado */}
           <div className="flex items-center">
@@ -69,8 +69,8 @@ const App = () => {
           <div></div>
         </header>
 
-        {/* Conteúdo principal (Dashboard) */}
-        <div className="flex-1">
+        {/* Dashboard - COM background matching */}
+        <div className="flex-1 bg-gray-50">
           <Dashboard currentSection={currentSection} />
         </div>
       </div>

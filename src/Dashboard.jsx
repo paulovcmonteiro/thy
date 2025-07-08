@@ -241,9 +241,9 @@ const Dashboard = ({ currentSection }) => {
           className="fixed right-4 w-16 h-16 rounded-full shadow-xl transition-all duration-300 flex items-center justify-center"
           style={{ 
             backgroundColor: '#4682B4',
-            bottom: '90px', // 🔧 CORREÇÃO: Posição específica em pixels
-            zIndex: 50,     // 🔧 CORREÇÃO: Z-index mais alto que a navegação
-            transform: 'translateZ(0)' // Hardware acceleration
+            bottom: '100px', // 🔧 CORREÇÃO: Mais espaço acima da navegação
+            zIndex: 50,
+            transform: 'translateZ(0)'
           }}
           onTouchStart={(e) => e.target.style.transform = 'scale(0.95) translateZ(0)'}
           onTouchEnd={(e) => e.target.style.transform = 'scale(1) translateZ(0)'}
@@ -251,14 +251,14 @@ const Dashboard = ({ currentSection }) => {
           <Plus className="w-7 h-7 text-white" />
         </button>
 
-        {/* FAB Secundário - Debriefing (só aparece quando necessário) */}
+        {/* FAB Secundário - Debriefing */}
         {shouldShowDebriefingButton && (
           <button
             onClick={() => setShowWeeklyDebriefing(true)}
             className="fixed right-24 w-12 h-12 bg-green-600 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
             style={{
-              bottom: '95px', // 🔧 CORREÇÃO: Alinhado com o botão principal
-              zIndex: 50      // 🔧 CORREÇÃO: Z-index consistente
+              bottom: '105px', // 🔧 CORREÇÃO: Alinhado com o principal
+              zIndex: 50
             }}
             onTouchStart={(e) => e.target.style.transform = 'scale(0.95)'}
             onTouchEnd={(e) => e.target.style.transform = 'scale(1)'}
@@ -319,16 +319,16 @@ const Dashboard = ({ currentSection }) => {
       </div>
 
       {/* ============================= */}
-      {/* CONTEÚDO PRINCIPAL - COMPACTO */}
+      {/* CONTEÚDO PRINCIPAL - COLADO AO HEADER */}
       {/* ============================= */}
-      <div className="space-y-2 lg:space-y-4">
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 pb-20 lg:pb-4">
         {/* Desktop: Renderiza seção baseada no sidebar */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block space-y-4">
           {renderDesktopSection()}
         </div>
 
         {/* Mobile: Renderiza seção baseada na navegação mobile */}
-        <div className="lg:hidden">
+        <div className="lg:hidden space-y-2">
           {renderMobileSection()}
         </div>
       </div>

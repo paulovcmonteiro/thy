@@ -114,7 +114,7 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg mb-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
       {/* Header clicável */}
       <div 
         className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
