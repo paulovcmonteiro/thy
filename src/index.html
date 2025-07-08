@@ -3,8 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/thy-logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- ✅ CORREÇÃO: Meta viewport mais robusta para evitar zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- ✅ ADIÇÃO: Meta tags para PWA e mobile -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
     <title>Thy - Análise de Hábitos</title>
+    
+    <!-- ✅ ADIÇÃO: CSS inline para prevenir zoom inicial -->
+    <style>
+      html, body {
+        overflow-x: hidden;
+        width: 100%;
+        position: relative;
+      }
+      
+      /* Previne zoom em inputs no iOS */
+      input[type="color"],
+      input[type="date"],
+      input[type="datetime"],
+      input[type="datetime-local"],
+      input[type="email"],
+      input[type="month"],
+      input[type="number"],
+      input[type="password"],
+      input[type="search"],
+      input[type="tel"],
+      input[type="text"],
+      input[type="time"],
+      input[type="url"],
+      input[type="week"],
+      select:focus,
+      textarea {
+        font-size: 16px !important;
+      }
+      
+      /* Força layout responsivo */
+      * {
+        box-sizing: border-box;
+      }
+      
+      #root {
+        width: 100%;
+        overflow-x: hidden;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
