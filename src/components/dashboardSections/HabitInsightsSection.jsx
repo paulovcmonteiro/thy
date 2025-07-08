@@ -1,4 +1,4 @@
-// src/components/dashboardSections/HabitInsightsSection.jsx - VERSÃO SEGURA
+// src/components/dashboardSections/HabitInsightsSection.jsx - TÍTULOS LIMPOS
 import React from 'react';
 import { Lightbulb, TrendingUp } from 'lucide-react';
 
@@ -7,23 +7,18 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
   // VERIFICAÇÕES DE SEGURANÇA
   if (!data) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="text-center text-gray-500">
           <Lightbulb className="w-8 h-8 mx-auto mb-2" />
-          <p>Dados não disponíveis para insights</p>
+          <p>Dados não disponíveis</p>
         </div>
       </div>
     );
   }
 
-  const { 
-    weeklyCompletionData = [], 
-    weightData = [], 
-    habitDataByType = {}, 
-    habitsList = [] 
-  } = data;
+  const { weeklyCompletionData = [], weightData = [], habitDataByType = {}, habitsList = [] } = data;
 
-  // Função para calcular métricas de completude geral
+  // Calcular métricas de completude geral
   const calculateCompletionMetrics = () => {
     if (!weeklyCompletionData || weeklyCompletionData.length === 0) {
       return {
@@ -50,7 +45,7 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
     };
   };
 
-  // Função para calcular tendência de peso
+  // Calcular tendência de peso
   const calculateWeightTrend = () => {
     if (!weightData || weightData.length < 2) {
       return {
@@ -73,14 +68,14 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
     };
   };
 
-  // Função para calcular métricas de hábito
+  // Calcular métricas de um hábito específico
   const calculateHabitMetrics = (habitData) => {
-    if (!habitData || !habitData.length) {
+    if (!habitData || habitData.length === 0) {
       return {
         avgGeral: 0,
         percentActive: 0,
         avgActive: 0,
-        classification: 'Sem dados 📊'
+        classification: 'Sem dados'
       };
     }
 
@@ -119,16 +114,17 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg mb-8">
+    <div className="bg-white rounded-lg shadow-lg mb-6">
       {/* Header clicável */}
       <div 
-        className="p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
         onClick={toggleSection}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <Lightbulb className="text-yellow-600" />
-            3. Insights Principais
+            {/* ✅ CORREÇÃO: Removido "3." do título */}
+            Insights Principais
           </h2>
           <TrendingUp 
             className={`w-5 h-5 text-gray-400 transform transition-transform ${
@@ -140,11 +136,11 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
 
       {/* Conteúdo colapsível */}
       {isExpanded && (
-        <div className="p-6">
-          <div className="grid gap-4">
+        <div className="p-4">
+          <div className="grid gap-3">
             
             {/* Insight de Desempenho Geral */}
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
               <h3 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
                 📊 Desempenho Geral
               </h3>
@@ -162,7 +158,7 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
             </div>
 
             {/* Insight de Evolução do Peso */}
-            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
+            <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded-r-lg">
               <h3 className="font-semibold text-orange-700 mb-2 flex items-center gap-2">
                 ⚖️ Evolução do Peso
               </h3>
@@ -193,7 +189,7 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
             </div>
 
             {/* Insight de Destaques por Hábito */}
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+            <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg">
               <h3 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
                 🎯 Destaques por Hábito
               </h3>
@@ -219,7 +215,7 @@ const HabitInsightsSection = ({ data, isExpanded, onToggle }) => {
                     );
                   })
                 ) : (
-                  <p>Adicione dados de hábitos para ver análises detalhadas.</p>
+                  <p className="text-sm">Adicione dados de hábitos para ver análises detalhadas.</p>
                 )}
               </div>
             </div>

@@ -1,44 +1,32 @@
-// src/components/dashboardSections/HabitPerformanceSection.jsx - VERSÃO SEGURA
+// src/components/dashboardSections/HabitPerformanceSection.jsx - TÍTULOS LIMPOS
 import React from 'react';
-import { Calendar, BarChart3 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
   
   // VERIFICAÇÕES DE SEGURANÇA
-  if (!data || !data.habitDataByType || !data.habitsList) {
+  if (!data) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="text-center text-gray-500">
-          <Calendar className="w-8 h-8 mx-auto mb-2" />
-          <p>Dados de hábitos não disponíveis</p>
+          <BarChart3 className="w-8 h-8 mx-auto mb-2" />
+          <p>Dados não disponíveis</p>
         </div>
       </div>
     );
   }
 
-  const { habitDataByType, habitsList } = data;
-
-  // Verificar se há dados válidos
-  if (!habitsList || habitsList.length === 0) {
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <div className="text-center text-gray-500">
-          <Calendar className="w-8 h-8 mx-auto mb-2" />
-          <p>Nenhum hábito encontrado</p>
-        </div>
-      </div>
-    );
-  }
+  const { habitDataByType = {}, habitsList = [] } = data;
 
   // Função para calcular métricas de um hábito
   const calculateHabitMetrics = (habitData) => {
-    if (!habitData || !habitData.length) {
+    if (!habitData || habitData.length === 0) {
       return {
         avgGeral: 0,
-        percentAtivas: 0,
-        avgAtivas: 0,
-        classification: 'Sem dados 📊'
+        percentActive: 0,
+        avgActive: 0,
+        classification: 'Sem dados'
       };
     }
 
@@ -47,22 +35,23 @@ const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
     const avgGeral = total > 0 ? totalValue / total : 0;
 
     const activeWeeks = habitData.filter(week => (week.valor || 0) > 0);
-    const percentAtivas = total > 0 ? (activeWeeks.length / total) * 100 : 0;
+    const percentActive = total > 0 ? (activeWeeks.length / total) * 100 : 0;
     
     const activeTotal = activeWeeks.reduce((sum, week) => sum + (week.valor || 0), 0);
-    const avgAtivas = activeWeeks.length > 0 ? activeTotal / activeWeeks.length : 0;
+    const avgActive = activeWeeks.length > 0 ? activeTotal / activeWeeks.length : 0;
 
-    // Classificação baseada na média geral
-    let classification = 'Ruim 😞';
-    if (avgGeral >= 60) classification = 'Excelente 🤩';
-    else if (avgGeral >= 50) classification = 'Bom 😊';
-    else if (avgGeral >= 40) classification = 'Legal 🙂';
-    else if (avgGeral >= 20) classification = 'Ok 😐';
+    // Classificação baseada na média geral (critério mais suave para hábitos individuais)
+    let classification = '';
+    if (avgGeral >= 60) classification = '🌟 Excelente';
+    else if (avgGeral >= 50) classification = '😊 Bom';
+    else if (avgGeral >= 40) classification = '👍 Legal';
+    else if (avgGeral >= 20) classification = '😐 Ok';
+    else classification = '😔 Ruim';
 
     return {
       avgGeral: Number(avgGeral.toFixed(1)),
-      percentAtivas: Number(percentAtivas.toFixed(1)),
-      avgAtivas: Number(avgAtivas.toFixed(1)),
+      percentActive: Number(percentActive.toFixed(1)),
+      avgActive: Number(avgActive.toFixed(1)),
       classification
     };
   };
@@ -73,16 +62,17 @@ const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg mb-8">
+    <div className="bg-white rounded-lg shadow-lg mb-6">
       {/* Header clicável */}
       <div 
-        className="p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
         onClick={toggleSection}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <Calendar className="text-purple-600" />
-            2. Performance por Hábito Individual
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <BarChart3 className="text-purple-600" />
+            {/* ✅ CORREÇÃO: Removido "2." do título */}
+            Performance por Hábito Individual
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">
@@ -99,15 +89,15 @@ const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
 
       {/* Conteúdo colapsível */}
       {isExpanded && (
-        <div className="p-6">
-          <div className="grid gap-6">
+        <div className="p-4">
+          <div className="grid gap-4">
             {habitsList.map((habitKey, index) => {
               const habitInfo = habitDataByType[habitKey];
               
               // Verificações de segurança para cada hábito
               if (!habitInfo || !habitInfo.data) {
                 return (
-                  <div key={habitKey} className="border-l-4 border-gray-300 pl-4">
+                  <div key={habitKey} className="border-l-4 border-gray-300 pl-3">
                     <h3 className="text-lg font-medium text-gray-500 capitalize">
                       {habitKey} - Sem dados
                     </h3>
@@ -120,8 +110,8 @@ const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
               const color = colors[index % colors.length];
               
               return (
-                <div key={habitKey} className="border-l-4 border-gray-300 pl-4">
-                  <div className="flex justify-between items-center mb-3">
+                <div key={habitKey} className="border-l-4 border-gray-300 pl-3">
+                  <div className="flex justify-between items-center mb-2">
                     <h3 className="text-lg font-medium text-gray-700 capitalize">
                       {habitInfo.habit || habitKey}
                     </h3>
@@ -131,10 +121,10 @@ const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
                           <span className="font-semibold">Média Geral:</span> {metrics.avgGeral}%
                         </div>
                         <div className="text-green-600">
-                          <span className="font-semibold">% Ativas:</span> {metrics.percentAtivas}%
+                          <span className="font-semibold">% Ativas:</span> {metrics.percentActive}%
                         </div>
                         <div className="text-blue-600">
-                          <span className="font-semibold">Média Ativas:</span> {metrics.avgAtivas}%
+                          <span className="font-semibold">Média Ativas:</span> {metrics.avgActive}%
                         </div>
                         <div className="text-gray-500 mt-1">
                           {metrics.classification}
@@ -144,28 +134,28 @@ const HabitPerformanceSection = ({ data, isExpanded, onToggle }) => {
                   </div>
                   
                   {/* Gráfico do hábito */}
-                  <div className="h-40">
+                  <div className="h-32">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={habitInfo.data}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis 
-                          dataKey="semana"
-                          fontSize={9}
-                          angle={-45}
-                          textAnchor="end"
-                          height={50}
+                          dataKey="semana" 
+                          fontSize={10}
+                          stroke="#6b7280"
                         />
                         <YAxis 
-                          domain={[0, 100]}
-                          tickFormatter={(value) => `${value}%`}
                           fontSize={10}
+                          stroke="#6b7280"
+                          domain={[0, 100]}
                         />
                         <Tooltip 
-                          formatter={(value) => [`${value}%`, 'Completude']}
+                          formatter={(value) => [`${value}%`, habitInfo.habit || habitKey]}
+                          labelStyle={{ color: '#374151' }}
                           contentStyle={{ 
-                            backgroundColor: '#ffffff',
+                            backgroundColor: 'white', 
                             border: '1px solid #e5e7eb',
-                            borderRadius: '8px'
+                            borderRadius: '6px',
+                            fontSize: '11px'
                           }}
                         />
                         <Bar 

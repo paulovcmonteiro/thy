@@ -1,4 +1,4 @@
-// src/Dashboard.jsx - VERSÃO CORRIGIDA COM SEMANA ATUAL
+// src/Dashboard.jsx - VERSÃO CORRIGIDA UX MOBILE
 import React, { useState } from 'react';
 import { Plus, BarChart3 } from 'lucide-react';
 import AddDayForm from './components/habitForms/AddDayForm';
@@ -12,7 +12,7 @@ import MobileBottomNav from './components/navigation/MobileBottomNav';
 import useDashboardData from './hooks/useDashboardData';
 import useDebriefingVisibility from './hooks/useDebriefingVisibility';
 
-const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
+const Dashboard = ({ currentSection }) => {
   const { data, loading, error, refreshData, addNewDay } = useDashboardData();
   const { shouldShowButton: shouldShowDebriefingButton, refresh: refreshDebriefingVisibility } = useDebriefingVisibility();
   
@@ -72,7 +72,6 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
           />
         );
       default:
-        // Fallback para semana atual
         return (
           <CurrentWeekSection 
             data={data} 
@@ -128,7 +127,6 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         );
       case 'dashboard':
       default:
-        // Dashboard: só os botões, nenhuma seção
         return null;
     }
   };
@@ -199,10 +197,12 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
   return (
     <div className="max-w-6xl mx-auto p-4 lg:p-6 bg-gray-50 min-h-screen">
       
-      {/* Mobile Bottom Navigation - INLINE PARA GARANTIR FUNCIONAMENTO */}
+      {/* =============================================== */}
+      {/* MOBILE BOTTOM NAVIGATION - MANTIDO INALTERADO */}
+      {/* =============================================== */}
       <div className="lg:hidden">
-        {/* Espaçador reduzido - era h-20, agora h-16 */}
-        <div className="h-16"></div>
+        {/* ✅ CORREÇÃO: Espaçador reduzido para layout mais compacto */}
+        <div className="h-4"></div>
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-1 py-2 z-30">
           <div className="flex items-center justify-around">
             {[
@@ -231,6 +231,47 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         </div>
       </div>
 
+      {/* ================================================== */}
+      {/* FLOATING ACTION BUTTON (FAB) - NOVA IMPLEMENTAÇÃO */}
+      {/* ================================================== */}
+      <div className="lg:hidden">
+        {/* FAB Principal - Update Diário */}
+        <button
+          onClick={() => setShowAddDayForm(true)}
+          className="fixed right-4 w-16 h-16 rounded-full shadow-xl transition-all duration-300 flex items-center justify-center"
+          style={{ 
+            backgroundColor: '#4682B4',
+            bottom: '90px', // 🔧 CORREÇÃO: Posição específica em pixels
+            zIndex: 50,     // 🔧 CORREÇÃO: Z-index mais alto que a navegação
+            transform: 'translateZ(0)' // Hardware acceleration
+          }}
+          onTouchStart={(e) => e.target.style.transform = 'scale(0.95) translateZ(0)'}
+          onTouchEnd={(e) => e.target.style.transform = 'scale(1) translateZ(0)'}
+        >
+          <Plus className="w-7 h-7 text-white" />
+        </button>
+
+        {/* FAB Secundário - Debriefing (só aparece quando necessário) */}
+        {shouldShowDebriefingButton && (
+          <button
+            onClick={() => setShowWeeklyDebriefing(true)}
+            className="fixed right-24 w-12 h-12 bg-green-600 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
+            style={{
+              bottom: '95px', // 🔧 CORREÇÃO: Alinhado com o botão principal
+              zIndex: 50      // 🔧 CORREÇÃO: Z-index consistente
+            }}
+            onTouchStart={(e) => e.target.style.transform = 'scale(0.95)'}
+            onTouchEnd={(e) => e.target.style.transform = 'scale(1)'}
+          >
+            <BarChart3 className="w-5 h-5 text-white" />
+          </button>
+        )}
+      </div>
+
+      {/* ============================================= */}
+      {/* DESKTOP: BOTÕES GRANDES NO TOPO - MANTIDOS */}
+      {/* ============================================= */}
+      
       {/* TÍTULO - Apenas no desktop quando não for Semana Atual */}
       {currentSection !== 'semana-atual' && (
         <div className="hidden lg:block mb-6">
@@ -243,7 +284,7 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         </div>
       )}
 
-      {/* SEÇÃO DE BOTÕES PRINCIPAIS - SÓ NA SEMANA ATUAL */}
+      {/* SEÇÃO DE BOTÕES PRINCIPAIS - SÓ NO DESKTOP */}
       <div className="flex flex-col lg:flex-row justify-center items-center gap-4 mb-4 lg:mb-8">
         {/* Desktop: só mostra quando currentSection === 'semana-atual' */}
         {currentSection === 'semana-atual' && (
@@ -273,37 +314,14 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
           </div>
         )}
 
-        {/* Mobile: só mostra quando estiver na semana-atual ou dashboard */}
-        {(currentMobileSection === 'semana-atual' || currentMobileSection === 'dashboard') && (
-          <div className="lg:hidden flex flex-col justify-center items-center gap-4 w-full">
-            {/* Botão Update Diário */}
-            <button
-              onClick={() => setShowAddDayForm(true)}
-              className="flex items-center justify-center gap-3 text-white px-8 py-4 rounded-lg transition-colors text-lg font-bold w-full"
-              style={{ backgroundColor: '#4682B4' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#3a6d99'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#4682B4'}
-            >
-              <Plus className="w-6 h-6" />
-              Update Diário
-            </button>
-
-            {/* Botão Debriefing - só aparece quando necessário */}
-            {shouldShowDebriefingButton && (
-              <button
-                onClick={() => setShowWeeklyDebriefing(true)}
-                className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium w-full"
-              >
-                <BarChart3 className="w-6 h-6" />
-                Debriefing da Semana
-              </button>
-            )}
-          </div>
-        )}
+        {/* ❌ REMOVIDO: Seção de botões duplicada para mobile */}
+        {/* A seção móvel anterior foi totalmente removida para eliminar conflitos */}
       </div>
 
-      {/* CONTEÚDO PRINCIPAL */}
-      <div className="space-y-4 lg:space-y-6">
+      {/* ============================= */}
+      {/* CONTEÚDO PRINCIPAL - COMPACTO */}
+      {/* ============================= */}
+      <div className="space-y-2 lg:space-y-4">
         {/* Desktop: Renderiza seção baseada no sidebar */}
         <div className="hidden lg:block">
           {renderDesktopSection()}
@@ -315,7 +333,9 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         </div>
       </div>
 
-      {/* MODAIS */}
+      {/* ===================== */}
+      {/* MODAIS - INALTERADOS */}
+      {/* ===================== */}
       {showAddDayForm && (
         <AddDayForm
           isOpen={showAddDayForm}

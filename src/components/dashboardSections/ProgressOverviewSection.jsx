@@ -1,4 +1,4 @@
-// src/components/dashboardSections/ProgressOverviewSection.jsx - CORRIGIDA SEM DEPENDÊNCIAS
+// src/components/dashboardSections/ProgressOverviewSection.jsx - TÍTULOS LIMPOS
 import React from 'react';
 import { TrendingUp, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -8,7 +8,7 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
   // VERIFICAÇÕES DE SEGURANÇA
   if (!data) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="text-center text-gray-500">
           <TrendingUp className="w-8 h-8 mx-auto mb-2" />
           <p>Dados não disponíveis</p>
@@ -78,16 +78,17 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg mb-8">
+    <div className="bg-white rounded-lg shadow-lg mb-6">
       {/* Header clicável */}
       <div 
-        className="p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
         onClick={toggleSection}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <TrendingUp className="text-green-600" />
-            1. Evolução Geral (Completude e Peso)
+            {/* ✅ CORREÇÃO: Removido "1." do título */}
+            Evolução Geral (Completude e Peso)
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">
@@ -104,57 +105,56 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
 
       {/* Conteúdo colapsível */}
       {isExpanded && (
-        <div className="p-6">
-          <div className="grid md:grid-cols-2 gap-8">
+        <div className="p-4">
+          <div className="grid md:grid-cols-2 gap-6">
             
             {/* GRÁFICO DE COMPLETUDE */}
             <div className="bg-white">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <TrendingUp className="text-green-600" />
                 📈 Evolução da Completude
               </h3>
               
               {/* Métricas */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[#4682B4]">{completionMetrics.avgGeral}%</div>
-                  <div className="text-sm text-gray-600">Média Geral</div>
+                  <div className="text-xl font-bold text-[#4682B4]">{completionMetrics.avgGeral}%</div>
+                  <div className="text-xs text-gray-600">Média Geral</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{completionMetrics.percentActive}%</div>
-                  <div className="text-sm text-gray-600">% Semanas Ativas</div>
+                  <div className="text-xl font-bold text-green-600">{completionMetrics.percentActive}%</div>
+                  <div className="text-xs text-gray-600">% Semanas Ativas</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{completionMetrics.avgActive}%</div>
-                  <div className="text-sm text-gray-600">Média Ativas</div>
+                  <div className="text-xl font-bold text-purple-600">{completionMetrics.avgActive}%</div>
+                  <div className="text-xs text-gray-600">Média Ativas</div>
                 </div>
               </div>
 
               {/* Gráfico */}
               {weeklyCompletionData.length > 0 ? (
-                <div className="h-64">
+                <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={weeklyCompletionData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis 
                         dataKey="semana" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                        fontSize={9}
+                        fontSize={11}
+                        stroke="#6b7280"
                       />
                       <YAxis 
+                        fontSize={11}
+                        stroke="#6b7280"
                         domain={[0, 100]}
-                        tickFormatter={(value) => `${value}%`}
-                        fontSize={10}
                       />
                       <Tooltip 
                         formatter={(value) => [`${value}%`, 'Completude']}
                         labelStyle={{ color: '#374151' }}
                         contentStyle={{ 
-                          backgroundColor: '#ffffff',
+                          backgroundColor: 'white', 
                           border: '1px solid #e5e7eb',
-                          borderRadius: '8px'
+                          borderRadius: '6px',
+                          fontSize: '12px'
                         }}
                       />
                       <Line 
@@ -163,74 +163,73 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
                         stroke="#4682B4" 
                         strokeWidth={2}
                         dot={{ fill: '#4682B4', strokeWidth: 2, r: 3 }}
-                        activeDot={{ r: 5, fill: '#3a6d99' }}
+                        activeDot={{ r: 5, stroke: '#4682B4', strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-64 flex items-center justify-center text-gray-500">
-                  <p>Nenhum dado de completude disponível</p>
+                <div className="h-48 flex items-center justify-center text-gray-500 text-sm">
+                  Adicione dados de hábitos para ver o gráfico
                 </div>
               )}
             </div>
 
             {/* GRÁFICO DE PESO */}
             <div className="bg-white">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <Target className="text-orange-600" />
                 ⚖️ Evolução do Peso
               </h3>
-              
+
               {/* Métricas de Peso */}
               {weightTrend.hasData ? (
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">
+                    <div className="text-xl font-bold text-orange-600">
                       {weightTrend.trend > 0 ? '+' : ''}{weightTrend.trend}kg
                     </div>
-                    <div className="text-sm text-gray-600">Variação Total</div>
+                    <div className="text-xs text-gray-600">Variação Total</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{weightTrend.firstWeight}kg</div>
-                    <div className="text-sm text-gray-600">Peso Inicial</div>
+                    <div className="text-xl font-bold text-gray-600">{weightTrend.firstWeight}kg</div>
+                    <div className="text-xs text-gray-600">Peso Inicial</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{weightTrend.lastWeight}kg</div>
-                    <div className="text-sm text-gray-600">Peso Atual</div>
+                    <div className="text-xl font-bold text-gray-600">{weightTrend.lastWeight}kg</div>
+                    <div className="text-xs text-gray-600">Peso Atual</div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center mb-6 text-gray-500">
+                <div className="text-center mb-4 text-gray-500 text-sm">
                   <p>Adicione dados de peso para ver a evolução</p>
                 </div>
               )}
 
               {/* Gráfico de Peso */}
               {weightData.length > 0 ? (
-                <div className="h-64">
+                <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={weightData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis 
                         dataKey="semana" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                        fontSize={9}
+                        fontSize={11}
+                        stroke="#6b7280"
                       />
                       <YAxis 
-                        domain={['dataMin - 2', 'dataMax + 2']}
-                        tickFormatter={(value) => `${value}kg`}
-                        fontSize={10}
+                        fontSize={11}
+                        stroke="#6b7280"
+                        domain={[75, 90]}
                       />
                       <Tooltip 
                         formatter={(value) => [`${value}kg`, 'Peso']}
                         labelStyle={{ color: '#374151' }}
                         contentStyle={{ 
-                          backgroundColor: '#ffffff',
+                          backgroundColor: 'white', 
                           border: '1px solid #e5e7eb',
-                          borderRadius: '8px'
+                          borderRadius: '6px',
+                          fontSize: '12px'
                         }}
                       />
                       <Line 
@@ -239,14 +238,14 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
                         stroke="#f59e0b" 
                         strokeWidth={2}
                         dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
-                        activeDot={{ r: 5, fill: '#d97706' }}
+                        activeDot={{ r: 5, stroke: '#f59e0b', strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-64 flex items-center justify-center text-gray-500">
-                  <p>Nenhum dado de peso disponível</p>
+                <div className="h-48 flex items-center justify-center text-gray-500 text-sm">
+                  Adicione dados de peso para ver o gráfico
                 </div>
               )}
             </div>
@@ -258,4 +257,4 @@ const ProgressOverviewSection = ({ data, isExpanded, onToggle }) => {
   );
 };
 
-export default ProgressOverviewSection
+export default ProgressOverviewSection;
