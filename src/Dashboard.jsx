@@ -248,13 +248,16 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         {/* Desktop: só mostra quando currentSection === 'semana-atual' */}
         {currentSection === 'semana-atual' && (
           <div className="hidden lg:flex flex-row justify-center items-center gap-4 w-full">
-            {/* Botão Adicionar Dia */}
+            {/* Botão Update Diário */}
             <button
               onClick={() => setShowAddDayForm(true)}
-              className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium"
+              className="flex items-center justify-center gap-3 text-white px-8 py-4 rounded-lg transition-colors text-lg font-bold"
+              style={{ backgroundColor: '#4682B4' }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#3a6d99'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#4682B4'}
             >
               <Plus className="w-6 h-6" />
-              Adicionar Dia
+              Update Diário
             </button>
 
             {/* Botão Debriefing - só aparece quando necessário */}
@@ -273,13 +276,16 @@ const Dashboard = ({ currentSection }) => { // ✅ RECEBE COMO PROP
         {/* Mobile: só mostra quando estiver na semana-atual ou dashboard */}
         {(currentMobileSection === 'semana-atual' || currentMobileSection === 'dashboard') && (
           <div className="lg:hidden flex flex-col justify-center items-center gap-4 w-full">
-            {/* Botão Adicionar Dia */}
+            {/* Botão Update Diário */}
             <button
               onClick={() => setShowAddDayForm(true)}
-              className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium w-full"
+              className="flex items-center justify-center gap-3 text-white px-8 py-4 rounded-lg transition-colors text-lg font-bold w-full"
+              style={{ backgroundColor: '#4682B4' }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#3a6d99'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#4682B4'}
             >
               <Plus className="w-6 h-6" />
-              Adicionar Dia
+              Update Diário
             </button>
 
             {/* Botão Debriefing - só aparece quando necessário */}
