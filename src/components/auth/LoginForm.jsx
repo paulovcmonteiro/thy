@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
+import thyLogo from '../../assets/thy.png';
 
 const LoginForm = () => {
   // Estados para guardar o que o usuário digita
@@ -29,13 +30,16 @@ const LoginForm = () => {
         
         {/* Cabeçalho com logo Thy bem grande */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6">
+          <div className="flex items-center justify-center mb-4">
             <img 
-              src="/assets/thy-logo.png" 
+              src={thyLogo} 
               alt="Thy" 
               className="h-24 w-auto"
             />
           </div>
+          <p className="text-gray-500 text-base italic mb-4">
+            Know Thyself
+          </p>
           <p className="text-gray-600 text-lg">
             {isRegistering ? 'Crie sua conta' : 'Entre na sua conta'}
           </p>

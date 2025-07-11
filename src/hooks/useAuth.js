@@ -15,12 +15,28 @@ const useUserAuth = () => {
   const [user, setUser] = useState(null);        // Quem está logado
   const [loading, setLoading] = useState(true);  // Está carregando?
   const [error, setError] = useState(null);      // Tem algum erro?
+  const [userType, setUserType] = useState(null); // Tipo do usuário (admin/simple)
+
+  // 2.1. FUNÇÃO PARA DETECTAR TIPO DO USUÁRIO - "Verificar crachá"
+  const getUserType = (userEmail) => {
+    // Se for o email do Paulo = admin, senão = simple
+    return userEmail === 'pvcmonteiro@gmail.com' ? 'admin' : 'simple';
+  };
 
   // 3. MONITOR AUTOMÁTICO - "Vigia 24h"
   useEffect(() => {
     // Fica "observando" mudanças no login/logout
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);           // Atualiza quem está logado
+      
+      // Se tem usuário logado, detecta o tipo dele
+      if (user) {
+        const detectedUserType = getUserType(user.email);
+        setUserType(detectedUserType);
+      } else {
+        setUserType(null);     // Se não tem usuário, limpa o tipo
+      }
+      
       setLoading(false);       // Para de carregar
     });
 
@@ -66,6 +82,7 @@ const useUserAuth = () => {
   // 7. RETORNA TUDO - "Entrega o controle remoto"
   return {
     user,      // Informações de quem está logado
+    userType,  // Tipo do usuário (admin/simple)
     loading,   // Se está carregando
     error,     // Mensagem de erro (se houver)
     login,     // Função para fazer login

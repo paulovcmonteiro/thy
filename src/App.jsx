@@ -6,9 +6,10 @@ import LoginForm from './components/auth/LoginForm';
 import SidebarToggle from './components/navigation/SidebarToggle';
 import Sidebar from './components/navigation/Sidebar';
 import Dashboard from './Dashboard';
+import SimpleDashboard from './components/SimpleDashboard';
 
 const App = () => {
-  const { user, loading, logout } = useAuth();
+  const { user, userType, loading, logout } = useAuth();
   const { 
     isOpen: sidebarOpen, 
     currentSection, 
@@ -16,6 +17,16 @@ const App = () => {
     navigateToSection, 
     closeSidebar 
   } = useSidebar();
+
+  // Função para renderizar dashboard baseado no tipo de usuário
+  const renderDashboard = () => {
+    if (userType === 'simple') {
+      return <SimpleDashboard onLogout={logout} />;
+    }
+    
+    // Default: Dashboard completo para admin
+    return <Dashboard currentSection={currentSection} />;
+  };
 
   // Loading state
   if (loading) {
@@ -34,7 +45,17 @@ const App = () => {
     return <LoginForm />;
   }
 
-  // ✅ CORREÇÃO: Restaurar header mas sem espaçamento
+  // Layout condicional baseado no tipo de usuário
+  if (userType === 'simple') {
+    // Layout simplificado para usuários simples (sem sidebar/header)
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {renderDashboard()}
+      </div>
+    );
+  }
+
+  // Layout completo para administradores
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar (apenas desktop) */}
@@ -71,7 +92,7 @@ const App = () => {
 
         {/* Dashboard - COM background matching */}
         <div className="flex-1 bg-gray-50">
-          <Dashboard currentSection={currentSection} />
+          {renderDashboard()}
         </div>
       </div>
     </div>
