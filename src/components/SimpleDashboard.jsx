@@ -217,19 +217,27 @@ const SimpleDashboard = ({ onLogout }) => {
                   <div
                     key={day.date}
                     className={`
-                      p-3 rounded-lg border-2 text-center cursor-pointer transition-all
-                      ${day.isToday ? 'ring-2 ring-blue-400' : ''}
+                      p-3 rounded-lg border text-center cursor-pointer transition-all
+                      ${day.isToday ? 'ring-1 ring-blue-300' : ''}
                       ${isCompleted 
                         ? 'bg-green-100 border-green-300 text-green-800' 
-                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                        : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
                       }
                     `}
                     onClick={() => toggleDay(day.date)}
                   >
                     <div className="text-sm font-medium mb-1">{day.dayName}</div>
                     <div className="text-lg font-bold">{day.dayNumber}</div>
-                    <div className="text-2xl mt-1">
-                      {isCompleted ? '✅' : '⭕'}
+                    <div className="mt-2 flex justify-center">
+                      {isCompleted ? (
+                        <div className="w-7 h-7 border-2 border-green-500 rounded bg-green-100 flex items-center justify-center shadow-sm">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 border border-gray-200 rounded bg-gray-50 hover:border-gray-300 transition-colors"></div>
+                      )}
                     </div>
                   </div>
                 );
