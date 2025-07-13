@@ -84,6 +84,7 @@ import {
         estudar: habitData.estudar || false,
         descansar: habitData.descansar || false,
         obs: habitData.obs || '',
+        sentimento: habitData.sentimento || '', // 🆕 Incluir campo sentimento
         
         // Metadados
         createdAt: new Date().toISOString(),

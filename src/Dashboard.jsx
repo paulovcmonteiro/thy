@@ -34,7 +34,6 @@ const Dashboard = ({ currentSection }) => {
       case 'semana-atual':
         return (
           <CurrentWeekSection 
-            data={data} 
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -42,7 +41,7 @@ const Dashboard = ({ currentSection }) => {
       case 'semana-anterior':
         return (
           <WeeklyDebriefingSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -50,7 +49,7 @@ const Dashboard = ({ currentSection }) => {
       case 'evolucao-geral':
         return (
           <ProgressOverviewSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -58,7 +57,7 @@ const Dashboard = ({ currentSection }) => {
       case 'performance-habito':
         return (
           <HabitPerformanceSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -66,7 +65,7 @@ const Dashboard = ({ currentSection }) => {
       case 'insights-principais':
         return (
           <HabitInsightsSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -74,7 +73,6 @@ const Dashboard = ({ currentSection }) => {
       default:
         return (
           <CurrentWeekSection 
-            data={data} 
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -88,7 +86,6 @@ const Dashboard = ({ currentSection }) => {
       case 'semana-atual':
         return (
           <CurrentWeekSection 
-            data={data} 
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -96,7 +93,7 @@ const Dashboard = ({ currentSection }) => {
       case 'semana-anterior':
         return (
           <WeeklyDebriefingSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -104,7 +101,7 @@ const Dashboard = ({ currentSection }) => {
       case 'evolucao-geral':
         return (
           <ProgressOverviewSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -112,7 +109,7 @@ const Dashboard = ({ currentSection }) => {
       case 'performance-habito':
         return (
           <HabitPerformanceSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />
@@ -120,7 +117,7 @@ const Dashboard = ({ currentSection }) => {
       case 'insights-principais':
         return (
           <HabitInsightsSection 
-            data={data} 
+            data={data}
             isExpanded={true}
             onToggle={() => {}}
           />

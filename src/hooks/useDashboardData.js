@@ -100,7 +100,8 @@ const useDashboardData = () => {
         alimentar: Boolean(dayData.alimentar),
         estudar: Boolean(dayData.estudar),
         descansar: Boolean(dayData.descansar),
-        obs: dayData.obs || ''
+        obs: dayData.obs || '',
+        sentimento: dayData.sentimento || '' // 🆕 Incluir sentimento
       };
 
       console.log('📤 [useHabitsData] Dados para salvar:', {

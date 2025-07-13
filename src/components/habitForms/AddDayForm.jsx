@@ -162,6 +162,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
         setSaveStatus('saved');
         console.log('✅ [AddDayForm] Auto-save realizado com sucesso');
         
+        // 🆕 Disparar evento para sincronizar outras seções
+        window.dispatchEvent(new CustomEvent('habitsUpdated'));
+        
         // Limpar indicador de "saved" após 2 segundos
         setTimeout(() => {
           setSaveStatus('idle');
@@ -240,6 +243,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
         obs: newFormData.obs || '',
         sentimento: newFormData.sentimento || '' // 🆕 Incluir sentimento no auto-save
       };
+
+      console.log('🔍 [AddDayForm] Dados do auto-save (incluindo sentimento):', autoSaveData);
+      console.log('🔍 [AddDayForm] Sentimento específico:', autoSaveData.sentimento);
 
       performAutoSave(autoSaveData);
     }, 1500);
@@ -388,6 +394,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
       if (result.success) {
         setSuccessMessage('✅ Dia salvo com sucesso! Semana recalculada automaticamente 🎉');
         setSaveStatus('saved');
+        
+        // 🆕 Disparar evento para sincronizar outras seções
+        window.dispatchEvent(new CustomEvent('habitsUpdated'));
         
         // Fechar modal após 2 segundos
         setTimeout(() => {

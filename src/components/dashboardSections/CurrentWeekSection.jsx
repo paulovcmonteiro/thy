@@ -1,11 +1,14 @@
 // src/components/dashboardSections/CurrentWeekSection.jsx - MOBILE RESPONSIVO
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { getDayHabits } from '../../firebase/habitsService';
+import useDashboardData from '../../hooks/useDashboardData';
 
-const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
+const CurrentWeekSection = ({ isExpanded, onToggle }) => {
+  const { refreshData } = useDashboardData(); // Só para sincronização
   const [currentWeekData, setCurrentWeekData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(0);
 
   // Lista de hábitos com seus emojis
   const habitsList = [
@@ -18,11 +21,11 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
     { key: 'descansar', label: '😴', name: 'Descansar' }
   ];
 
-  // Emojis de sentimento
+  // Emojis de sentimento (iguais ao formulário)
   const sentimentEmojis = {
-    'ansioso': '😩',
+    'ansioso': '😟',
     'normal': '😐', 
-    'produtivo': '🔥'
+    'produtivo': '😊'
   };
 
   // Função para obter datas da semana atual
@@ -68,6 +71,8 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
           const dayData = await getDayHabits(dayInfo.date);
           
           if (dayData.success && dayData.data) {
+            console.log(`🔍 [CurrentWeekSection] Dados carregados para ${dayInfo.date}:`, dayData.data);
+            console.log(`🔍 [CurrentWeekSection] Sentimento específico para ${dayInfo.date}:`, dayData.data.sentimento);
             weekData[dayInfo.date] = {
               ...dayData.data,
               dayInfo: dayInfo,
@@ -96,9 +101,34 @@ const CurrentWeekSection = ({ data, isExpanded, onToggle }) => {
     }
   };
 
+  // Carregar dados inicialmente
   useEffect(() => {
     loadCurrentWeekData();
   }, []);
+
+  // Listener para mudanças globais (quando formulário salva)
+  useEffect(() => {    
+    // Listener personalizado para mudanças locais
+    const handleLocalUpdate = () => {
+      console.log('📢 [CurrentWeekSection] Detectada atualização local, recarregando...');
+      // Force um delay pequeno para garantir que o Firebase foi atualizado
+      setTimeout(() => {
+        loadCurrentWeekData();
+      }, 500);
+    };
+
+    window.addEventListener('habitsUpdated', handleLocalUpdate);
+
+    return () => {
+      window.removeEventListener('habitsUpdated', handleLocalUpdate);
+    };
+  }, []);
+
+  // 🆕 Método público para forçar refresh (para debug)
+  window.refreshCurrentWeek = () => {
+    console.log('🔄 [CurrentWeekSection] Refresh manual ativado');
+    loadCurrentWeekData();
+  };
 
   const allDays = Object.values(currentWeekData)
     .sort((a, b) => a.dayInfo.date.localeCompare(b.dayInfo.date));
