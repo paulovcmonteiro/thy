@@ -44,14 +44,14 @@ const CurrentWeekSection = ({ isExpanded, onToggle }) => {
       const date = new Date(sunday);
       date.setDate(sunday.getDate() + i);
       
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i];
       
       weekDates.push({
         date: dateStr,
         dayName: dayName,
         dayNumber: date.getDate(),
-        isToday: dateStr === brasiliaTime.toISOString().split('T')[0]
+        isToday: dateStr === `${brasiliaTime.getFullYear()}-${String(brasiliaTime.getMonth() + 1).padStart(2, '0')}-${String(brasiliaTime.getDate()).padStart(2, '0')}`
       });
     }
     
