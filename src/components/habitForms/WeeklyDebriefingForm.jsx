@@ -500,7 +500,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={weightData}>
                           <XAxis dataKey="semana" fontSize={12} />
-                          <YAxis domain={[80, 90]} fontSize={12} />
+                          <YAxis domain={[75, 85]} fontSize={12} />
                           <Tooltip formatter={(value) => [`${value}kg`, 'Peso']} />
                           <Line 
                             type="monotone" 
