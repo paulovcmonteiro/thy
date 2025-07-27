@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd thy-front && npm install && npm run build",
+  "outputDirectory": "thy-front/dist",
+  "installCommand": "cd thy-front && npm install",
+  "devCommand": "cd thy-front && npm run dev",
+  "framework": "vite"
+}
