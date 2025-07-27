@@ -1,19 +1,43 @@
 // src/components/SimpleDashboard.jsx - Dashboard simplificado para usuários simples
 import React, { useState } from 'react';
-import { Plus, Edit2, Menu } from 'lucide-react';
+import { Plus, Edit2, Menu, X } from 'lucide-react';
 import SimpleSidebar from './navigation/SimpleSidebar';
 import SimpleEvolutionSection from './simple/SimpleEvolutionSection';
+import SimpleWeekTable from './simple/SimpleWeekTable';
 
 const SimpleDashboard = ({ onLogout }) => {
-  // Estados para o hábito único
-  const [habit, setHabit] = useState(null);
+  // Função para carregar hábitos do localStorage
+  const loadHabitsFromStorage = () => {
+    try {
+      const savedHabits = localStorage.getItem('simple_dashboard_habits');
+      return savedHabits ? JSON.parse(savedHabits) : [];
+    } catch (error) {
+      console.error('Erro ao carregar hábitos do localStorage:', error);
+      return [];
+    }
+  };
+
+  // Função para salvar hábitos no localStorage
+  const saveHabitsToStorage = (habitsData) => {
+    try {
+      localStorage.setItem('simple_dashboard_habits', JSON.stringify(habitsData));
+      console.log('✅ Hábitos salvos no localStorage:', habitsData);
+    } catch (error) {
+      console.error('❌ Erro ao salvar hábitos no localStorage:', error);
+    }
+  };
+
+  // Estados para múltiplos hábitos
+  const [habits, setHabits] = useState(() => loadHabitsFromStorage());
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingHabitId, setEditingHabitId] = useState(null);
   const [habitName, setHabitName] = useState('');
   const [habitEmoji, setHabitEmoji] = useState('✅');
   
   // Estados para sidebar e navegação
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentSection, setCurrentSection] = useState('meu-habito');
+  const [currentSection, setCurrentSection] = useState('semana-atual');
 
   // Lista de emojis populares para escolher
   const emojiOptions = ['✅', '🏃', '💊', '🧘', '📚', '💬', '🍎', '😴', '💡', '🎯'];
@@ -56,79 +80,252 @@ const SimpleDashboard = ({ onLogout }) => {
     return weekDates;
   };
 
+  // Função para obter datas da semana anterior (7 dias completos)
+  const getPreviousWeekDates = () => {
+    const today = new Date();
+    const brasiliaOffset = -3;
+    const utcTime = today.getTime() + (today.getTimezoneOffset() * 60000);
+    const brasiliaTime = new Date(utcTime + (brasiliaOffset * 3600000));
+    
+    // Calcular domingo da semana passada
+    const currentDay = brasiliaTime.getDay();
+    const previousSunday = new Date(brasiliaTime);
+    previousSunday.setDate(brasiliaTime.getDate() - currentDay - 7);
+    
+    const weekDates = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(previousSunday);
+      date.setDate(previousSunday.getDate() + i);
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i];
+      
+      weekDates.push({
+        date: dateStr,
+        dayName: dayName,
+        dayNumber: date.getDate(),
+        isToday: false // Semana anterior nunca é "hoje"
+      });
+    }
+    
+    return weekDates;
+  };
+
   // Função para criar hábito
   const handleCreateHabit = () => {
     if (habitName.trim()) {
-      setHabit({
+      const newHabit = {
+        id: Date.now().toString(), // ID único baseado em timestamp
         name: habitName.trim(),
         emoji: habitEmoji,
-        completedDays: [] // Array para guardar dias concluídos
-      });
+        completedDays: [], // Array para guardar dias concluídos
+        createdAt: new Date().toISOString()
+      };
+      
+      const updatedHabits = [...habits, newHabit];
+      setHabits(updatedHabits);
+      saveHabitsToStorage(updatedHabits);
       setShowCreateForm(false);
+      setIsEditMode(false);
       setHabitName('');
+      setHabitEmoji('✅');
     }
   };
 
-  // Função para marcar/desmarcar dia
-  const toggleDay = (dateStr) => {
-    if (!habit) return;
-    
-    const updatedHabit = { ...habit };
-    const dayIndex = updatedHabit.completedDays.indexOf(dateStr);
-    
-    if (dayIndex > -1) {
-      // Remove o dia (desmarca)
-      updatedHabit.completedDays.splice(dayIndex, 1);
-    } else {
-      // Adiciona o dia (marca)
-      updatedHabit.completedDays.push(dateStr);
+  // Função para iniciar edição do hábito
+  const handleEditHabit = (habitId) => {
+    const habitToEdit = habits.find(h => h.id === habitId);
+    if (habitToEdit) {
+      setHabitName(habitToEdit.name);
+      setHabitEmoji(habitToEdit.emoji);
+      setEditingHabitId(habitId);
+      setIsEditMode(true);
+      setShowCreateForm(true);
     }
+  };
+
+  // Função para salvar edição do hábito
+  const handleSaveEdit = () => {
+    if (habitName.trim() && editingHabitId) {
+      const updatedHabits = habits.map(habit => 
+        habit.id === editingHabitId 
+          ? {
+              ...habit,
+              name: habitName.trim(),
+              emoji: habitEmoji,
+              updatedAt: new Date().toISOString()
+            }
+          : habit
+      );
+      
+      setHabits(updatedHabits);
+      saveHabitsToStorage(updatedHabits);
+      setShowCreateForm(false);
+      setIsEditMode(false);
+      setEditingHabitId(null);
+      setHabitName('');
+      setHabitEmoji('✅');
+    }
+  };
+
+  // Função para cancelar edição
+  const handleCancelEdit = () => {
+    setShowCreateForm(false);
+    setIsEditMode(false);
+    setEditingHabitId(null);
+    setHabitName('');
+    setHabitEmoji('✅');
+  };
+
+  // Função para deletar hábito
+  const handleDeleteHabit = (habitId) => {
+    if (window.confirm('⚠️ Tem certeza que deseja deletar este hábito? Esta ação não pode ser desfeita.')) {
+      const updatedHabits = habits.filter(habit => habit.id !== habitId);
+      setHabits(updatedHabits);
+      saveHabitsToStorage(updatedHabits);
+    }
+  };
+
+  // Função para limpar todos os dados (útil para privacidade)
+  const handleClearAllData = () => {
+    if (window.confirm('⚠️ Tem certeza que deseja apagar todos os dados? Esta ação não pode ser desfeita.')) {
+      localStorage.removeItem('simple_dashboard_habits');
+      setHabits([]);
+      setShowCreateForm(false);
+      setIsEditMode(false);
+      setEditingHabitId(null);
+      setHabitName('');
+      setHabitEmoji('✅');
+      console.log('🗑️ Todos os dados foram apagados do localStorage');
+    }
+  };
+
+  // Função para marcar/desmarcar dia de um hábito específico
+  const toggleDay = (habitId, dateStr) => {
+    const updatedHabits = habits.map(habit => {
+      if (habit.id === habitId) {
+        const updatedHabit = { ...habit };
+        const dayIndex = updatedHabit.completedDays.indexOf(dateStr);
+        
+        if (dayIndex > -1) {
+          // Remove o dia (desmarca)
+          updatedHabit.completedDays.splice(dayIndex, 1);
+        } else {
+          // Adiciona o dia (marca)
+          updatedHabit.completedDays.push(dateStr);
+        }
+        
+        // Adicionar timestamp da última atualização
+        updatedHabit.lastUpdated = new Date().toISOString();
+        return updatedHabit;
+      }
+      return habit;
+    });
     
-    setHabit(updatedHabit);
+    setHabits(updatedHabits);
+    saveHabitsToStorage(updatedHabits);
   };
 
   const weekDates = getCurrentWeekDates();
+  const previousWeekDates = getPreviousWeekDates();
 
   // Função para renderizar seção atual
   const renderCurrentSection = () => {
     switch(currentSection) {
-      case 'meu-habito':
-        return renderHabitSection();
+      case 'semana-atual':
+        return renderCurrentWeekSection();
+      case 'semana-anterior':
+        return renderPreviousWeekSection();
       case 'evolucao':
-        return <SimpleEvolutionSection habit={habit} />;
+        return <SimpleEvolutionSection habits={habits} />;
       default:
-        return renderHabitSection();
+        return renderCurrentWeekSection();
     }
   };
 
-  // Função para renderizar seção do hábito
-  const renderHabitSection = () => {
+  // Função para renderizar seção da semana anterior
+  const renderPreviousWeekSection = () => {
+    if (habits.length === 0) {
+      return (
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Nenhum hábito criado ainda
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Crie um hábito primeiro para ver o histórico da semana anterior
+          </p>
+          <button
+            onClick={() => {
+              setCurrentSection('semana-atual');
+              closeSidebar();
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Criar Meu Primeiro Hábito
+          </button>
+        </div>
+      );
+    }
+
+    // Calcular data inicial da semana anterior para o título
+    const startDate = previousWeekDates[0];
+    const endDate = previousWeekDates[6];
+    const formatDate = (dateStr) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    };
+
     return (
       <div className="space-y-6">
-        {/* Se não tem hábito criado, mostra formulário */}
-        {!habit && !showCreateForm && (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Crie seu primeiro hábito!
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Escolha um hábito que você quer acompanhar todos os dias
-            </p>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mx-auto"
-            >
-              <Plus className="w-5 h-5" />
-              Criar Hábito
-            </button>
-          </div>
-        )}
+        {habits.map(habit => (
+          <SimpleWeekTable
+            key={habit.id}
+            habit={habit}
+            weekDates={previousWeekDates}
+            title={`${habit.emoji} ${habit.name} - Semana Anterior (${formatDate(startDate.date)} - ${formatDate(endDate.date)})`}
+            loading={false}
+            showTitle={true}
+            isEditable={false}
+            onDayClick={null}
+          />
+        ))}
 
-        {/* Formulário para criar hábito */}
+        {/* Mensagem explicativa */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="font-semibold text-blue-800 mb-2">
+            📊 Visualização do Histórico
+          </h3>
+          <p className="text-blue-700 text-sm">
+            Aqui você pode ver como foi seu desempenho na semana passada. 
+            Use esta informação para refletir sobre seus hábitos e planejar melhorias.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // Função para renderizar seção da semana atual
+  const renderCurrentWeekSection = () => {
+    return (
+      <div className="space-y-6">
+        {/* Botão para adicionar hábito */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800">Semana Atual</h2>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Hábito
+          </button>
+        </div>
+
+        {/* Formulário para criar/editar hábito */}
         {showCreateForm && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Criar Novo Hábito
+              {isEditMode ? 'Editar Hábito' : 'Criar Novo Hábito'}
             </h2>
             
             <div className="space-y-4">
@@ -171,14 +368,14 @@ const SimpleDashboard = ({ onLogout }) => {
               {/* Botões */}
               <div className="flex gap-3">
                 <button
-                  onClick={handleCreateHabit}
+                  onClick={isEditMode ? handleSaveEdit : handleCreateHabit}
                   disabled={!habitName.trim()}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Criar Hábito
+                  {isEditMode ? 'Salvar Alterações' : 'Criar Hábito'}
                 </button>
                 <button
-                  onClick={() => setShowCreateForm(false)}
+                  onClick={isEditMode ? handleCancelEdit : () => setShowCreateForm(false)}
                   className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                 >
                   Cancelar
@@ -188,9 +385,21 @@ const SimpleDashboard = ({ onLogout }) => {
           </div>
         )}
 
-        {/* Se tem hábito criado, mostra a semana */}
-        {habit && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+        {/* Lista de hábitos */}
+        {habits.length === 0 && !showCreateForm && (
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Nenhum hábito criado ainda!
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Clique em "Novo Hábito" acima para começar!
+            </p>
+          </div>
+        )}
+
+        {/* Lista de hábitos criados */}
+        {habits.map(habit => (
+          <div key={habit.id} className="bg-white rounded-lg shadow-md p-6">
             {/* Header do hábito */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -199,13 +408,22 @@ const SimpleDashboard = ({ onLogout }) => {
                   {habit.name}
                 </h2>
               </div>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-                title="Editar hábito"
-              >
-                <Edit2 className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleEditHabit(habit.id)}
+                  className="text-gray-500 hover:text-blue-600 transition-colors"
+                  title="Editar hábito"
+                >
+                  <Edit2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDeleteHabit(habit.id)}
+                  className="text-gray-500 hover:text-red-600 transition-colors"
+                  title="Deletar hábito"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Grid da semana */}
@@ -224,7 +442,7 @@ const SimpleDashboard = ({ onLogout }) => {
                         : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
                       }
                     `}
-                    onClick={() => toggleDay(day.date)}
+                    onClick={() => toggleDay(habit.id, day.date)}
                   >
                     <div className="text-sm font-medium mb-1">{day.dayName}</div>
                     <div className="text-lg font-bold">{day.dayNumber}</div>
@@ -248,7 +466,9 @@ const SimpleDashboard = ({ onLogout }) => {
             <div className="mt-6 bg-gray-50 rounded-lg p-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {habit.completedDays.length}/{weekDates.length}
+                  {habit.completedDays.filter(date => 
+                    weekDates.some(day => day.date === date)
+                  ).length}/{weekDates.length}
                 </div>
                 <div className="text-sm text-gray-600">
                   dias concluídos esta semana
@@ -256,7 +476,7 @@ const SimpleDashboard = ({ onLogout }) => {
               </div>
             </div>
           </div>
-        )}
+        ))}
       </div>
     );
   };
@@ -284,7 +504,8 @@ const SimpleDashboard = ({ onLogout }) => {
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
             <h1 className="text-lg font-semibold text-gray-800">
-              {currentSection === 'meu-habito' ? 'Meu Hábito' : 'Evolução'}
+              {currentSection === 'semana-atual' ? 'Semana Atual' : 
+               currentSection === 'semana-anterior' ? 'Semana Anterior' : 'Evolução'}
             </h1>
             <div className="w-10"></div>
           </div>

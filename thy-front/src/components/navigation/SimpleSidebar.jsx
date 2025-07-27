@@ -6,10 +6,16 @@ const SimpleSidebar = ({ isOpen, currentSection, onNavigate, onClose, onLogout }
   // Menu simplificado para usuários simples
   const menuItems = [
     { 
-      id: 'meu-habito', 
-      label: 'Meu Hábito', 
+      id: 'semana-atual', 
+      label: 'Semana Atual', 
       icon: '✅',
-      description: 'Acompanhar meu progresso diário'
+      description: 'Acompanhar meus hábitos diariamente'
+    },
+    { 
+      id: 'semana-anterior', 
+      label: 'Semana Anterior', 
+      icon: '📋',
+      description: 'Ver progresso da semana passada'
     },
     { 
       id: 'evolucao', 
