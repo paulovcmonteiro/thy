@@ -153,3 +153,7 @@ Responsável por:
 ---
 
 Se quiser personalizar ou adicionar mais detalhes, me avise! Posso adaptar para o seu estilo ou incluir instruções específicas.
+
+---
+
+🧪 **Teste de deploy Vercel - 27/07/2025**
