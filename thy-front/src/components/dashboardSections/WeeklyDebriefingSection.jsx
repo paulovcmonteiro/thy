@@ -2,12 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Star, TrendingUp, MessageSquare, Target, BarChart3 } from 'lucide-react';
 import WeeklyDebriefingForm from '../habitForms/WeeklyDebriefingForm';
+import WeekTable from '../common/WeekTable';
 import { getLastCompletedDebriefing, formatWeekDate } from '../../firebase/debriefingService';
+import { getDayHabits } from '../../firebase/habitsService';
 
 const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
   const [showWeeklyDebriefing, setShowWeeklyDebriefing] = useState(false);
   const [lastDebriefing, setLastDebriefing] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Estados para a tabela da semana anterior
+  const [previousWeekData, setPreviousWeekData] = useState({});
+  const [weekTableLoading, setWeekTableLoading] = useState(false);
 
   // Carregar último debriefing finalizado
   const loadLastDebriefing = async () => {
@@ -28,9 +34,109 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
     }
   };
 
+  // Função para calcular datas da semana anterior (7 dias completos)
+  const getPreviousWeekDates = (weekDate) => {
+    if (!weekDate) return [];
+    
+    try {
+      // weekDate pode ser qualquer dia da semana, vamos encontrar o domingo
+      const inputDate = new Date(weekDate + 'T00:00:00');
+      const dayOfWeek = inputDate.getDay(); // 0=domingo, 1=segunda, etc.
+      
+      // Calcular quantos dias voltar para chegar no domingo
+      const daysToSunday = dayOfWeek; // Se é terça (2), volta 2 dias
+      
+      // Encontrar o domingo da semana
+      const sunday = new Date(inputDate);
+      sunday.setDate(inputDate.getDate() - daysToSunday);
+      
+      console.log('🔍 [getPreviousWeekDates] Input:', weekDate, 'DayOfWeek:', dayOfWeek, 'Sunday calculado:', sunday.toISOString().split('T')[0]);
+      
+      const weekDates = [];
+      
+      // Gerar os 7 dias da semana (domingo a sábado)
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(sunday);
+        date.setDate(sunday.getDate() + i);
+        
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i];
+        
+        weekDates.push({
+          date: dateStr,
+          dayName: dayName,
+          dayNumber: date.getDate(),
+          isToday: false // Semana anterior nunca é "hoje"
+        });
+      }
+      
+      return weekDates;
+    } catch (error) {
+      console.error('Erro ao calcular datas da semana anterior:', error);
+      return [];
+    }
+  };
+
+  // Função para carregar dados da semana anterior
+  const loadPreviousWeekData = async (weekDate) => {
+    console.log('🔍 [loadPreviousWeekData] Iniciando com weekDate:', weekDate);
+    if (!weekDate) return;
+    
+    setWeekTableLoading(true);
+    
+    try {
+      const weekDates = getPreviousWeekDates(weekDate);
+      console.log('🔍 [loadPreviousWeekData] weekDates calculadas:', weekDates);
+      const weekData = {};
+      
+      for (const dayInfo of weekDates) {
+        try {
+          const dayData = await getDayHabits(dayInfo.date);
+          
+          if (dayData.success && dayData.data) {
+            weekData[dayInfo.date] = {
+              ...dayData.data,
+              dayInfo: dayInfo,
+              hasData: true
+            };
+          } else {
+            weekData[dayInfo.date] = {
+              dayInfo: dayInfo,
+              hasData: false
+            };
+          }
+        } catch (error) {
+          weekData[dayInfo.date] = {
+            dayInfo: dayInfo,
+            hasData: false
+          };
+        }
+      }
+      
+      console.log('🔍 [loadPreviousWeekData] weekData final:', weekData);
+      setPreviousWeekData(weekData);
+      
+    } catch (error) {
+      console.error('Erro ao carregar dados da semana anterior:', error);
+    } finally {
+      setWeekTableLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadLastDebriefing();
   }, []);
+
+  // Carregar dados da semana quando o debriefing for carregado
+  useEffect(() => {
+    console.log('🔍 [WeeklyDebriefing] lastDebriefing mudou:', lastDebriefing);
+    if (lastDebriefing && lastDebriefing.weekDate) {
+      console.log('🔍 [WeeklyDebriefing] Carregando dados para weekDate:', lastDebriefing.weekDate);
+      loadPreviousWeekData(lastDebriefing.weekDate);
+    } else {
+      console.log('🔍 [WeeklyDebriefing] Sem weekDate disponível');
+    }
+  }, [lastDebriefing]);
 
   // Formatar data para exibição
   const formatDisplayDate = (dateString) => {
@@ -132,9 +238,6 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
                   <h4 className="text-lg font-semibold text-purple-800">
                     📋 Debriefing da Semana
                   </h4>
-                  <p className="text-purple-600">
-                    {formatDisplayDate(lastDebriefing.weekDate)}
-                  </p>
                 </div>
                 
                 {/* Avaliação da semana */}
@@ -149,6 +252,23 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
                 )}
               </div>
             </div>
+
+            {/* Tabela da semana anterior */}
+            <WeekTable
+              weekData={previousWeekData}
+              title={`Semana de ${(() => {
+                // Calcular o domingo da semana para mostrar data correta
+                const inputDate = new Date(lastDebriefing.weekDate + 'T00:00:00');
+                const dayOfWeek = inputDate.getDay();
+                const sunday = new Date(inputDate);
+                sunday.setDate(inputDate.getDate() - dayOfWeek);
+                return formatDisplayDate(sunday.toISOString().split('T')[0]);
+              })()}`}
+              loading={weekTableLoading}
+              showTitle={true}
+              isEditable={false}
+              onDayClick={null}
+            />
 
             {/* Grid com as reflexões */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

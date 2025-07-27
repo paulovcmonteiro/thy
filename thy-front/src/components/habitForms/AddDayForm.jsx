@@ -1,6 +1,6 @@
 // components/forms/AddDayForm.jsx - FORMULÁRIO COM AUTO-SAVE CORRIGIDO
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Calendar, Save, Check, AlertCircle, Clock } from 'lucide-react';
+import { X, Calendar, Save, Check, AlertCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import useDashboardData from '../../hooks/useDashboardData';
 import { getDayHabits } from '../../firebase/habitsService';
 
@@ -149,6 +149,58 @@ const AddDayForm = ({ isOpen, onClose }) => {
       setSaveStatus('idle');
     }
   }, []);
+
+  // 🆕 FUNÇÕES: NAVEGAÇÃO ENTRE DIAS COM SETAS
+  const navigateToDay = (direction) => {
+    const currentDate = new Date(formData.date);
+    const targetDate = new Date(currentDate);
+    
+    if (direction === 'prev') {
+      targetDate.setDate(currentDate.getDate() - 1);
+    } else if (direction === 'next') {
+      targetDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Não permitir datas futuras
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Final do dia de hoje
+    
+    if (targetDate > today) {
+      return; // Não navegar para o futuro
+    }
+    
+    const newDateISO = targetDate.toISOString().split('T')[0];
+    console.log('🔄 [AddDayForm] Navegando para:', newDateISO);
+    
+    // Atualizar a data no formulário
+    setFormData(prev => ({ ...prev, date: newDateISO }));
+  };
+
+  const goToPreviousDay = () => navigateToDay('prev');
+  const goToNextDay = () => navigateToDay('next');
+
+  // Verificar se pode navegar para próximo dia (não pode ir para o futuro)
+  const canGoToNextDay = () => {
+    const currentDate = new Date(formData.date);
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(currentDate.getDate() + 1);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return nextDay <= today;
+  };
+
+  // Formatar data para exibição (ex: "Ter, 23/07")
+  const formatDateDisplay = (dateISO) => {
+    try {
+      const date = new Date(dateISO + 'T00:00:00');
+      const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][date.getDay()];
+      const dayNum = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${dayName}, ${dayNum}/${month}`;
+    } catch {
+      return dateISO;
+    }
+  };
 
   // 🆕 FUNÇÃO: AUTO-SAVE COM DEBOUNCE
   const performAutoSave = useCallback(async (dataToSave) => {
@@ -520,15 +572,46 @@ const AddDayForm = ({ isOpen, onClose }) => {
           <>
             {/* Conteúdo principal com scroll se necessário */}
             <div className="flex-1 overflow-y-auto px-4 pt-2 pb-32 w-full">
-              {/* Data */}
+              {/* Header de navegação com setas */}
+              <div className="flex items-center justify-between mb-4 bg-gray-50 rounded-lg p-3">
+                <button
+                  type="button"
+                  onClick={goToPreviousDay}
+                  className="p-2 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+                  disabled={loading}
+                >
+                  <ChevronLeft size={20} className="text-gray-600" />
+                </button>
+                
+                <div className="text-center cursor-pointer" onClick={() => document.getElementById('date-picker-mobile').showPicker()}>
+                  <div className="text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors">
+                    {formatDateDisplay(formData.date)}
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={goToNextDay}
+                  disabled={loading || !canGoToNextDay()}
+                  className={`p-2 rounded-full border border-gray-200 shadow-sm transition-colors ${
+                    canGoToNextDay() && !loading
+                      ? 'bg-white hover:bg-gray-50'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <ChevronRight size={20} className={canGoToNextDay() && !loading ? 'text-gray-600' : 'text-gray-400'} />
+                </button>
+              </div>
+
+              {/* Input de data invisível para seletor */}
               <input
+                id="date-picker-mobile"
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
                 max={today}
-                className="w-full text-xl px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center font-semibold mb-3"
+                className="sr-only"
                 disabled={loading}
-                style={{ fontSize: '1.2rem' }}
               />
               {/* Peso */}
               <input
