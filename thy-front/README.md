@@ -156,4 +156,5 @@ Se quiser personalizar ou adicionar mais detalhes, me avise! Posso adaptar para 
 
 ---
 
-🧪 **Teste de deploy Vercel - 27/07/2025**
+🧪 **Teste de deploy Vercel - 27/07/2025**  
+🔥 **Firebase env vars configuradas**
