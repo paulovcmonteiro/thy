@@ -1,0 +1,7 @@
+node_modules
+
+# Arquivos de ambiente (contêm chaves secretas)
+.env
+
+# Build/distribuição (arquivos gerados automaticamente)
+dist/

@@ -1,0 +1,12 @@
+# Dependências
+node_modules/
+
+# Arquivos de ambiente (contêm chaves secretas)
+.env
+
+# Logs
+npm-debug.log*
+*.log
+
+# Cache do sistema
+.DS_Store
