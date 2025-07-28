@@ -49,7 +49,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">{getIcon(title)}</span>
             <h3 className={`font-semibold ${colors.text}`}>
-              {title.trim()}
+              {title.replace(/[🎉🔍📊💡🚀📋]/g, '').trim()}
             </h3>
           </div>
           
@@ -62,7 +62,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
               if (trimmedLine.startsWith('- ')) {
                 const bulletContent = trimmedLine.substring(2);
                 
-                // Destacar fontes de dados entre parênteses
+                // Destacar fontes de dados entre parênteses, preservando emojis
                 const highlightedContent = bulletContent.replace(
                   /\*(.*?)\*/g, 
                   '<span class="text-xs bg-white/60 px-2 py-1 rounded font-medium">$1</span>'
@@ -79,7 +79,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
                 );
               }
               
-              // Renderizar parágrafo normal
+              // Renderizar parágrafo normal, preservando emojis
               return (
                 <p key={lineIndex} className="text-sm">
                   {trimmedLine}
