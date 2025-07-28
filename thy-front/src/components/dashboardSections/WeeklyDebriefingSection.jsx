@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Star, TrendingUp, MessageSquare, Target, BarChart3 } from 'lucide-react';
 import WeeklyDebriefingForm from '../habitForms/WeeklyDebriefingForm';
 import WeekTable from '../common/WeekTable';
+import AIInsightsPanel from '../ai/AIInsightsPanel';
 import { getLastCompletedDebriefing, formatWeekDate } from '../../firebase/debriefingService';
 import { getDayHabits } from '../../firebase/habitsService';
 
@@ -349,6 +350,37 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
                 </div>
               </div>
             )}
+
+            {/* AI Insights Panel */}
+            <AIInsightsPanel
+              weekData={{
+                weekStart: (() => {
+                  const inputDate = new Date(lastDebriefing.weekDate + 'T00:00:00');
+                  const dayOfWeek = inputDate.getDay();
+                  const sunday = new Date(inputDate);
+                  sunday.setDate(inputDate.getDate() - dayOfWeek);
+                  return sunday.toISOString().split('T')[0];
+                })(),
+                weekEnd: (() => {
+                  const inputDate = new Date(lastDebriefing.weekDate + 'T00:00:00');
+                  const dayOfWeek = inputDate.getDay();
+                  const saturday = new Date(inputDate);
+                  saturday.setDate(inputDate.getDate() - dayOfWeek + 6);
+                  return saturday.toISOString().split('T')[0];
+                })()
+              }}
+              habitData={previousWeekData}
+              userResponses={{
+                habitComments: lastDebriefing.habitComments || {},
+                weekRating: lastDebriefing.weekRating,
+                proudOf: lastDebriefing.proudOf,
+                notSoGood: lastDebriefing.notSoGood,
+                improveNext: lastDebriefing.improveNext
+              }}
+              onInsightsGenerated={(insights) => {
+                console.log('🤖 Insights gerados:', insights);
+              }}
+            />
 
             {/* Metadados */}
             <div className="border-t pt-4">
