@@ -42,12 +42,26 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
 
 // Função para construir prompt contextual
 const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
+  console.log('🔍 Debug buildDebriefingPrompt:', { weekData, habitData, userResponses });
+  
   const weekStart = new Date(weekData.weekStart);
   const weekEnd = new Date(weekData.weekEnd);
+  
+  // Verificar se habitData existe e tem o formato correto
+  if (!habitData || typeof habitData !== 'object') {
+    console.warn('⚠️ habitData inválido:', habitData);
+    habitData = {};
+  }
   
   // Calcular estatísticas da semana
   const totalHabits = Object.keys(habitData).length;
   const completedDays = Object.values(habitData).reduce((total, habit) => {
+    // Verificar se habit existe e tem completedDays
+    if (!habit || !habit.completedDays || !Array.isArray(habit.completedDays)) {
+      console.warn('⚠️ Habit inválido:', habit);
+      return total;
+    }
+    
     return total + habit.completedDays.filter(date => 
       date >= weekData.weekStart && date <= weekData.weekEnd
     ).length;
@@ -58,6 +72,16 @@ const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
 
   // Analisar performance por hábito
   const habitPerformance = Object.entries(habitData).map(([habitId, habit]) => {
+    // Verificar se habit existe e tem completedDays
+    if (!habit || !habit.completedDays || !Array.isArray(habit.completedDays)) {
+      return {
+        name: habitId,
+        emoji: '',
+        completedDays: 0,
+        percentage: 0
+      };
+    }
+    
     const weekDays = habit.completedDays.filter(date => 
       date >= weekData.weekStart && date <= weekData.weekEnd
     ).length;
@@ -71,11 +95,15 @@ const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
   });
 
   // Identificar melhores e piores hábitos
-  const bestHabit = habitPerformance.reduce((best, current) => 
-    current.percentage > best.percentage ? current : best, habitPerformance[0]);
+  const bestHabit = habitPerformance.length > 0 ? 
+    habitPerformance.reduce((best, current) => 
+      current.percentage > best.percentage ? current : best, habitPerformance[0]) : 
+    { name: 'N/A', emoji: '', percentage: 0 };
   
-  const worstHabit = habitPerformance.reduce((worst, current) => 
-    current.percentage < worst.percentage ? current : worst, habitPerformance[0]);
+  const worstHabit = habitPerformance.length > 0 ?
+    habitPerformance.reduce((worst, current) => 
+      current.percentage < worst.percentage ? current : worst, habitPerformance[0]) :
+    { name: 'N/A', emoji: '', percentage: 0 };
 
   const prompt = `
 Você é um coach de hábitos especializado em análise comportamental. Analise esta semana de hábitos e forneça insights personalizados:
@@ -88,12 +116,17 @@ Você é um coach de hábitos especializado em análise comportamental. Analise 
 - Total de dias completados: ${completedDays}/${totalPossibleDays}
 
 🎯 **PERFORMANCE POR HÁBITO**:
-${habitPerformance.map(habit => 
-  `- ${habit.emoji} ${habit.name}: ${habit.completedDays}/7 dias (${habit.percentage}%)`
-).join('\n')}
+${habitPerformance.length > 0 ? 
+  habitPerformance.map(habit => 
+    `- ${habit.emoji} ${habit.name}: ${habit.completedDays}/7 dias (${habit.percentage}%)`
+  ).join('\n') : 
+  '- Nenhum dado de hábito disponível para esta semana'
+}
 
+${habitPerformance.length > 0 ? `
 🏆 **DESTAQUE**: ${bestHabit.emoji} ${bestHabit.name} foi o melhor hábito (${bestHabit.percentage}%)
 ⚠️ **ATENÇÃO**: ${worstHabit.emoji} ${worstHabit.name} precisa de mais foco (${worstHabit.percentage}%)
+` : ''}
 
 ${userResponses.habitComments ? `
 💭 **COMENTÁRIOS DO USUÁRIO**:
