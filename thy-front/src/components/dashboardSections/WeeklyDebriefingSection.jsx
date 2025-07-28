@@ -380,6 +380,7 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
                 notSoGood: lastDebriefing.notSoGood,
                 improveNext: lastDebriefing.improveNext
               }}
+              allWeeklyData={data?.weeklyCompletionData || null}
               onInsightsGenerated={(insights) => {
                 console.log('🤖 Insights gerados:', insights);
               }}

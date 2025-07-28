@@ -2,12 +2,12 @@
 const AI_BASE_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:3001';
 
 // Função para gerar insights inteligentes de debriefing
-export const generateDebriefingInsights = async (weekData, habitData, userResponses = {}) => {
+export const generateDebriefingInsights = async (weekData, habitData, userResponses = {}, allWeeklyData = null) => {
   try {
     console.log('🤖 Gerando insights de debriefing...', { weekData, habitData });
 
     // Construir prompt contextual
-    const prompt = buildDebriefingPrompt(weekData, habitData, userResponses);
+    const prompt = buildDebriefingPrompt(weekData, habitData, userResponses, allWeeklyData);
     
     const response = await fetch(`${AI_BASE_URL}/api/claude`, {
       method: 'POST',
@@ -136,8 +136,43 @@ const extractAdditionalData = (habitData, weekStart, weekEnd) => {
   return additionalData;
 };
 
+// Função para processar dados de comparação com semanas anteriores
+const processHistoricalComparison = (allWeeklyData, currentWeek) => {
+  if (!allWeeklyData || !Array.isArray(allWeeklyData) || allWeeklyData.length < 2) {
+    return null; // Não há dados suficientes para comparação
+  }
+
+  // Pegar as últimas 4 semanas (excluindo a atual)
+  const historicalWeeks = allWeeklyData
+    .filter(week => week.semana !== currentWeek)
+    .slice(-4);
+
+  if (historicalWeeks.length === 0) return null;
+
+  // Calcular médias históricas
+  const avgCompletude = Math.round(
+    historicalWeeks.reduce((sum, week) => sum + (week.completude || 0), 0) / historicalWeeks.length
+  );
+
+  // Comparação por hábito (se disponível)
+  const habitComparison = {};
+  
+  // Encontrar semana atual para comparação
+  const currentWeekData = allWeeklyData.find(week => week.semana === currentWeek);
+  const currentCompletude = currentWeekData ? currentWeekData.completude : 0;
+
+  return {
+    avgCompletude,
+    currentCompletude,
+    weekCount: historicalWeeks.length,
+    trend: currentCompletude > avgCompletude ? 'melhora' : 
+           currentCompletude < avgCompletude ? 'declínio' : 'estável',
+    difference: currentCompletude - avgCompletude
+  };
+};
+
 // Função para construir prompt contextual
-const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
+const buildDebriefingPrompt = (weekData, habitData, userResponses, allWeeklyData = null) => {
   console.log('🔍 Debug buildDebriefingPrompt:', { weekData, habitData, userResponses });
   
   const weekStart = new Date(weekData.weekStart);
@@ -152,6 +187,9 @@ const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
   // Processar dados no formato real: { "2025-07-20": { meditar: true, exercitar: false } }
   const habitPerformance = processHabitDataByDay(habitData, weekData.weekStart, weekData.weekEnd);
   const additionalData = extractAdditionalData(habitData, weekData.weekStart, weekData.weekEnd);
+  
+  // Processar comparação histórica se disponível
+  const historicalData = allWeeklyData ? processHistoricalComparison(allWeeklyData, weekData.weekStart) : null;
   
   const totalHabits = habitPerformance.length;
   const completedDays = habitPerformance.reduce((total, habit) => total + habit.completedDays, 0);
@@ -230,6 +268,14 @@ Forneça um feedback estruturado em português, positivo e construtivo seguindo 
 - **Insight sobre peso:** [observação] *(baseado nos dados: Xkg→Ykg)*  
 - **Insight comportamental:** [observação] *(baseado na observação: "texto")*
 - **Insight emocional:** [observação] *(baseado no sentimento: X)*
+
+${historicalData ? `
+## 📊 Comparação com Semanas Anteriores
+[Análise comparativa detalhada com as últimas ${historicalData.weekCount} semanas:]
+- **Performance geral:** ${completionRate}% esta semana vs ${historicalData.avgCompletude}% média histórica *(${historicalData.trend}: ${historicalData.difference > 0 ? '+' : ''}${historicalData.difference}% de diferença)*
+- **Tendência identificada:** [análise da tendência e o que isso significa]
+- **Padrões observados:** [padrões comportamentais comparando com semanas anteriores]
+` : ''}
 
 ## 💡 Sugestões Práticas
 [3-4 ações específicas e detalhadas para melhorar]

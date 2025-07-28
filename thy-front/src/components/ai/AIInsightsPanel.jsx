@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Brain, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { generateDebriefingInsights } from '../../services/aiService';
 
-const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGenerated }) => {
+const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyData = null, onInsightsGenerated }) => {
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,6 +21,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGe
       const getIcon = (title) => {
         if (title.includes('🎉') || title.includes('Parabéns')) return '🎉';
         if (title.includes('🔍') || title.includes('Insights')) return '🔍';
+        if (title.includes('📊') || title.includes('Comparação')) return '📊';
         if (title.includes('💡') || title.includes('Sugestões')) return '💡';
         if (title.includes('🚀') || title.includes('Motivação')) return '🚀';
         return '📋';
@@ -32,6 +33,8 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGe
           return { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-200' };
         if (title.includes('🔍') || title.includes('Insights')) 
           return { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' };
+        if (title.includes('📊') || title.includes('Comparação')) 
+          return { bg: 'bg-orange-50', text: 'text-orange-800', border: 'border-orange-200' };
         if (title.includes('💡') || title.includes('Sugestões')) 
           return { bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-200' };
         if (title.includes('🚀') || title.includes('Motivação')) 
@@ -46,7 +49,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGe
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">{getIcon(title)}</span>
             <h3 className={`font-semibold ${colors.text}`}>
-              {title.replace(/[🎉🔍💡🚀📋]/g, '').trim()}
+              {title.trim()}
             </h3>
           </div>
           
@@ -94,7 +97,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGe
     setError(null);
     
     try {
-      const result = await generateDebriefingInsights(weekData, habitData, userResponses);
+      const result = await generateDebriefingInsights(weekData, habitData, userResponses, allWeeklyData);
       
       if (result.success) {
         setInsights(result.insights);
