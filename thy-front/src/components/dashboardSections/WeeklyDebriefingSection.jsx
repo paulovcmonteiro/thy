@@ -369,7 +369,10 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
                   return saturday.toISOString().split('T')[0];
                 })()
               }}
-              habitData={previousWeekData}
+              habitData={(() => {
+                console.log('🔍 [WeeklyDebriefingSection] Enviando habitData para IA:', previousWeekData);
+                return previousWeekData;
+              })()}
               userResponses={{
                 habitComments: lastDebriefing.habitComments || {},
                 weekRating: lastDebriefing.weekRating,

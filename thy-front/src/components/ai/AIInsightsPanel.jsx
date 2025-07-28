@@ -8,6 +8,87 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Função para renderizar insights estruturados
+  const renderStructuredInsights = (text) => {
+    const sections = text.split('##').filter(section => section.trim());
+    
+    return sections.map((section, index) => {
+      const lines = section.trim().split('\n');
+      const title = lines[0].trim();
+      const content = lines.slice(1).join('\n').trim();
+      
+      // Identificar ícone da seção
+      const getIcon = (title) => {
+        if (title.includes('🎉') || title.includes('Parabéns')) return '🎉';
+        if (title.includes('🔍') || title.includes('Insights')) return '🔍';
+        if (title.includes('💡') || title.includes('Sugestões')) return '💡';
+        if (title.includes('🚀') || title.includes('Motivação')) return '🚀';
+        return '📋';
+      };
+
+      // Identificar cor da seção
+      const getColors = (title) => {
+        if (title.includes('🎉') || title.includes('Parabéns')) 
+          return { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-200' };
+        if (title.includes('🔍') || title.includes('Insights')) 
+          return { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' };
+        if (title.includes('💡') || title.includes('Sugestões')) 
+          return { bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-200' };
+        if (title.includes('🚀') || title.includes('Motivação')) 
+          return { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' };
+        return { bg: 'bg-gray-50', text: 'text-gray-800', border: 'border-gray-200' };
+      };
+
+      const colors = getColors(title);
+      
+      return (
+        <div key={index} className={`${colors.bg} ${colors.border} border rounded-lg p-4`}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">{getIcon(title)}</span>
+            <h3 className={`font-semibold ${colors.text}`}>
+              {title.replace(/[🎉🔍💡🚀📋]/g, '').trim()}
+            </h3>
+          </div>
+          
+          <div className={`${colors.text} space-y-2`}>
+            {content.split('\n').map((line, lineIndex) => {
+              const trimmedLine = line.trim();
+              if (!trimmedLine) return null;
+              
+              // Renderizar lista com bullets
+              if (trimmedLine.startsWith('- ')) {
+                const bulletContent = trimmedLine.substring(2);
+                
+                // Destacar fontes de dados entre parênteses
+                const highlightedContent = bulletContent.replace(
+                  /\*(.*?)\*/g, 
+                  '<span class="text-xs bg-white/60 px-2 py-1 rounded font-medium">$1</span>'
+                );
+                
+                return (
+                  <div key={lineIndex} className="flex items-start gap-2">
+                    <span className="text-xs mt-1.5 opacity-60">•</span>
+                    <div 
+                      className="flex-1 text-sm"
+                      dangerouslySetInnerHTML={{ __html: highlightedContent }}
+                    />
+                  </div>
+                );
+              }
+              
+              // Renderizar parágrafo normal
+              return (
+                <p key={lineIndex} className="text-sm">
+                  {trimmedLine}
+                </p>
+              );
+            })}
+          </div>
+        </div>
+      );
+    });
+  };
+
   const handleGenerateInsights = async () => {
     setLoading(true);
     setError(null);
@@ -93,11 +174,9 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, onInsightsGe
 
         {insights && !loading && (
           <div className="space-y-4">
-            <div className="prose prose-sm max-w-none">
-              <div className="bg-white/70 rounded-lg p-4 border border-purple-100">
-                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                  {insights}
-                </div>
+            <div className="bg-white/70 rounded-lg p-4 border border-purple-100">
+              <div className="text-gray-700 leading-relaxed space-y-4">
+                {renderStructuredInsights(insights)}
               </div>
             </div>
             

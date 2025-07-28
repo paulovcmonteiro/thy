@@ -217,13 +217,25 @@ ${additionalData.observations.map(o => `- ${o.date}: "${o.observation}"`).join('
 ` : ''}
 
 **INSTRUÇÕES**: 
-Forneça um feedback em português, positivo e construtivo com:
-1. **Parabéns** pelo que foi bem feito
-2. **Insights** sobre padrões identificados  
-3. **Sugestões práticas** para melhorar
-4. **Motivação** para a próxima semana
+Forneça um feedback estruturado em português, positivo e construtivo seguindo EXATAMENTE este formato:
 
-Limite: 200 palavras, tom amigável e encorajador.`;
+## 🎉 Parabéns!
+[O que foi bem feito esta semana - cite dados específicos]
+
+## 🔍 Insights Identificados
+[3-4 insights baseados nos dados, sempre citando a fonte:]
+- **Insight sobre hábitos:** [observação] *(baseado na performance: X/7 dias)*
+- **Insight sobre peso:** [observação] *(baseado nos dados: Xkg→Ykg)*  
+- **Insight comportamental:** [observação] *(baseado na observação: "texto")*
+- **Insight emocional:** [observação] *(baseado no sentimento: X)*
+
+## 💡 Sugestões Práticas
+[2-3 ações específicas para melhorar]
+
+## 🚀 Motivação
+[Mensagem encorajadora para próxima semana]
+
+IMPORTANTE: Sempre cite a fonte dos dados entre parênteses. Limite: 350 palavras, tom amigável.`;
 
   return prompt;
 };
