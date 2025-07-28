@@ -223,19 +223,19 @@ Forneça um feedback estruturado em português, positivo e construtivo seguindo 
 [O que foi bem feito esta semana - cite dados específicos]
 
 ## 🔍 Insights Identificados
-[3-4 insights baseados nos dados, sempre citando a fonte:]
+[4-6 insights detalhados baseados nos dados, sempre citando a fonte:]
 - **Insight sobre hábitos:** [observação] *(baseado na performance: X/7 dias)*
 - **Insight sobre peso:** [observação] *(baseado nos dados: Xkg→Ykg)*  
 - **Insight comportamental:** [observação] *(baseado na observação: "texto")*
 - **Insight emocional:** [observação] *(baseado no sentimento: X)*
 
 ## 💡 Sugestões Práticas
-[2-3 ações específicas para melhorar]
+[3-4 ações específicas e detalhadas para melhorar]
 
 ## 🚀 Motivação
 [Mensagem encorajadora para próxima semana]
 
-IMPORTANTE: Sempre cite a fonte dos dados entre parênteses. Limite: 350 palavras, tom amigável.`;
+IMPORTANTE: Sempre cite a fonte dos dados entre parênteses. Limite: 1000 palavras, tom amigável e detalhado.`;
 
   return prompt;
 };
