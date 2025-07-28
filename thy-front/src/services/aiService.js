@@ -40,6 +40,100 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
   }
 };
 
+// Função para processar dados por dia no formato real
+const processHabitDataByDay = (habitData, weekStart, weekEnd) => {
+  console.log('🔄 Processando dados por dia:', { habitData, weekStart, weekEnd });
+  
+  // Lista de hábitos conhecidos
+  const habitLabels = {
+    meditar: { name: '🧘 Meditar', emoji: '🧘' },
+    medicar: { name: '💊 Medicar', emoji: '💊' },
+    exercitar: { name: '🏃 Exercitar', emoji: '🏃' },
+    comunicar: { name: '💬 Comunicar', emoji: '💬' },
+    alimentar: { name: '🍎 Alimentar', emoji: '🍎' },
+    estudar: { name: '📚 Estudar', emoji: '📚' },
+    descansar: { name: '😴 Descansar', emoji: '😴' }
+  };
+
+  // Identificar todos os hábitos presentes
+  const allHabits = new Set();
+  Object.values(habitData).forEach(dayData => {
+    if (dayData && typeof dayData === 'object') {
+      Object.keys(dayData).forEach(key => {
+        if (habitLabels[key] !== undefined) {
+          allHabits.add(key);
+        }
+      });
+    }
+  });
+
+  console.log('🎯 Hábitos encontrados:', Array.from(allHabits));
+
+  // Processar performance de cada hábito
+  const habitPerformance = Array.from(allHabits).map(habitKey => {
+    let completedDays = 0;
+    
+    // Contar dias completados para este hábito
+    Object.entries(habitData).forEach(([dateStr, dayData]) => {
+      if (dateStr >= weekStart && dateStr <= weekEnd && dayData && dayData[habitKey] === true) {
+        completedDays++;
+      }
+    });
+
+    const percentage = Math.round((completedDays / 7) * 100);
+    
+    return {
+      name: habitLabels[habitKey]?.name || habitKey,
+      emoji: habitLabels[habitKey]?.emoji || '',
+      habitKey: habitKey,
+      completedDays: completedDays,
+      percentage: percentage
+    };
+  });
+
+  console.log('📊 Performance calculada:', habitPerformance);
+  return habitPerformance;
+};
+
+// Função para extrair dados adicionais (peso, observações, sentimentos)
+const extractAdditionalData = (habitData, weekStart, weekEnd) => {
+  const additionalData = {
+    weightData: [],
+    observations: [],
+    sentiments: []
+  };
+
+  Object.entries(habitData).forEach(([dateStr, dayData]) => {
+    if (dateStr >= weekStart && dateStr <= weekEnd && dayData && typeof dayData === 'object') {
+      // Extrair peso
+      if (dayData.peso && typeof dayData.peso === 'number') {
+        additionalData.weightData.push({
+          date: dateStr,
+          weight: dayData.peso
+        });
+      }
+
+      // Extrair observações
+      if (dayData.obs && typeof dayData.obs === 'string' && dayData.obs.trim()) {
+        additionalData.observations.push({
+          date: dateStr,
+          observation: dayData.obs.trim()
+        });
+      }
+
+      // Extrair sentimentos
+      if (dayData.sentimento && typeof dayData.sentimento === 'string') {
+        additionalData.sentiments.push({
+          date: dateStr,
+          sentiment: dayData.sentimento
+        });
+      }
+    }
+  });
+
+  return additionalData;
+};
+
 // Função para construir prompt contextual
 const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
   console.log('🔍 Debug buildDebriefingPrompt:', { weekData, habitData, userResponses });
@@ -52,47 +146,15 @@ const buildDebriefingPrompt = (weekData, habitData, userResponses) => {
     console.warn('⚠️ habitData inválido:', habitData);
     habitData = {};
   }
-  
-  // Calcular estatísticas da semana
-  const totalHabits = Object.keys(habitData).length;
-  const completedDays = Object.values(habitData).reduce((total, habit) => {
-    // Verificar se habit existe e tem completedDays
-    if (!habit || !habit.completedDays || !Array.isArray(habit.completedDays)) {
-      console.warn('⚠️ Habit inválido:', habit);
-      return total;
-    }
-    
-    return total + habit.completedDays.filter(date => 
-      date >= weekData.weekStart && date <= weekData.weekEnd
-    ).length;
-  }, 0);
-  
-  const totalPossibleDays = totalHabits * 7;
-  const completionRate = Math.round((completedDays / totalPossibleDays) * 100);
 
-  // Analisar performance por hábito
-  const habitPerformance = Object.entries(habitData).map(([habitId, habit]) => {
-    // Verificar se habit existe e tem completedDays
-    if (!habit || !habit.completedDays || !Array.isArray(habit.completedDays)) {
-      return {
-        name: habitId,
-        emoji: '',
-        completedDays: 0,
-        percentage: 0
-      };
-    }
-    
-    const weekDays = habit.completedDays.filter(date => 
-      date >= weekData.weekStart && date <= weekData.weekEnd
-    ).length;
-    
-    return {
-      name: habit.name || habitId,
-      emoji: habit.emoji || '',
-      completedDays: weekDays,
-      percentage: Math.round((weekDays / 7) * 100)
-    };
-  });
+  // Processar dados no formato real: { "2025-07-20": { meditar: true, exercitar: false } }
+  const habitPerformance = processHabitDataByDay(habitData, weekData.weekStart, weekData.weekEnd);
+  const additionalData = extractAdditionalData(habitData, weekData.weekStart, weekData.weekEnd);
+  
+  const totalHabits = habitPerformance.length;
+  const completedDays = habitPerformance.reduce((total, habit) => total + habit.completedDays, 0);
+  const totalPossibleDays = totalHabits * 7;
+  const completionRate = totalPossibleDays > 0 ? Math.round((completedDays / totalPossibleDays) * 100) : 0;
 
   // Identificar melhores e piores hábitos
   const bestHabit = habitPerformance.length > 0 ? 
@@ -138,6 +200,21 @@ ${Object.entries(userResponses.habitComments).map(([habit, comment]) =>
 ${userResponses.proudOf ? `🌟 **O que foi bem**: "${userResponses.proudOf}"` : ''}
 ${userResponses.notSoGood ? `🤔 **Desafios**: "${userResponses.notSoGood}"` : ''}
 ${userResponses.improveNext ? `🚀 **Planos**: "${userResponses.improveNext}"` : ''}
+
+${additionalData.weightData.length > 0 ? `
+⚖️ **DADOS DE PESO**:
+${additionalData.weightData.map(w => `- ${w.date}: ${w.weight}kg`).join('\n')}
+` : ''}
+
+${additionalData.sentiments.length > 0 ? `
+😊 **SENTIMENTOS DA SEMANA**:
+${additionalData.sentiments.map(s => `- ${s.date}: ${s.sentiment}`).join('\n')}
+` : ''}
+
+${additionalData.observations.length > 0 ? `
+📝 **OBSERVAÇÕES DIÁRIAS**:
+${additionalData.observations.map(o => `- ${o.date}: "${o.observation}"`).join('\n')}
+` : ''}
 
 **INSTRUÇÕES**: 
 Forneça um feedback em português, positivo e construtivo com:
