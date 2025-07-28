@@ -58,7 +58,7 @@ app.post('/api/claude', async (req, res) => {
         // 3. Enviar para Claude
         const resposta = await anthropic.messages.create({
             model: "claude-3-5-haiku-20241022",
-            max_tokens: 300,
+            max_tokens: 2000,
             messages: [
                 { role: "user", content: prompt }
             ]

@@ -22,7 +22,9 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
     }
 
     const data = await response.json();
-    console.log('✅ Insights gerados:', data);
+    console.log('✅ Resposta completa da API:', data);
+    console.log('📝 Conteúdo dos insights:', data.response);
+    console.log('📏 Tamanho da resposta:', data.response ? data.response.length : 'undefined');
 
     return {
       success: true,
