@@ -25,6 +25,16 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
     console.log('✅ Resposta completa da API:', data);
     console.log('📝 Conteúdo dos insights:', data.response);
     console.log('📏 Tamanho da resposta:', data.response ? data.response.length : 'undefined');
+    
+    // Verificar se contém emojis
+    const hasEmojis = data.response ? /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(data.response) : false;
+    console.log('🔤 Contém emojis?', hasEmojis);
+    
+    // Mostrar todos os emojis encontrados
+    if (data.response && hasEmojis) {
+      const emojis = data.response.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu);
+      console.log('🎨 Emojis encontrados:', emojis ? emojis.join(' ') : 'nenhum');
+    }
 
     return {
       success: true,
@@ -260,30 +270,34 @@ ${additionalData.observations.map(o => `- ${o.date}: "${o.observation}"`).join('
 Forneça um feedback estruturado em português, positivo e construtivo seguindo EXATAMENTE este formato:
 
 ## 🎉 Parabéns!
-[O que foi bem feito esta semana - cite dados específicos]
+[O que foi bem feito esta semana - cite dados específicos e use emojis relevantes no texto 🎯✨]
 
 ## 🔍 Insights Identificados
-[4-6 insights detalhados baseados nos dados, sempre citando a fonte:]
-- **Insight sobre hábitos:** [observação] *(baseado na performance: X/7 dias)*
-- **Insight sobre peso:** [observação] *(baseado nos dados: Xkg→Ykg)*  
-- **Insight comportamental:** [observação] *(baseado na observação: "texto")*
-- **Insight emocional:** [observação] *(baseado no sentimento: X)*
+[4-6 insights detalhados baseados nos dados, sempre citando a fonte e usando emojis no texto:]
+- **Insight sobre hábitos:** [observação com emojis 💪🏃‍♀️🧘] *(baseado na performance: X/7 dias)*
+- **Insight sobre peso:** [observação com emojis ⚖️📈📉] *(baseado nos dados: Xkg→Ykg)*  
+- **Insight comportamental:** [observação com emojis 🤔💭🔄] *(baseado na observação: "texto")*
+- **Insight emocional:** [observação com emojis 😊😰🌟] *(baseado no sentimento: X)*
 
 ${historicalData ? `
 ## 📊 Comparação com Semanas Anteriores
-[Análise comparativa detalhada com as últimas ${historicalData.weekCount} semanas:]
+[Análise comparativa detalhada com as últimas ${historicalData.weekCount} semanas, usando emojis 📈📉🔄:]
 - **Performance geral:** ${completionRate}% esta semana vs ${historicalData.avgCompletude}% média histórica *(${historicalData.trend}: ${historicalData.difference > 0 ? '+' : ''}${historicalData.difference}% de diferença)*
-- **Tendência identificada:** [análise da tendência e o que isso significa]
-- **Padrões observados:** [padrões comportamentais comparando com semanas anteriores]
+- **Tendência identificada:** [análise da tendência com emojis 🚀📉⚡]
+- **Padrões observados:** [padrões comportamentais com emojis 🔍💡📅]
 ` : ''}
 
 ## 💡 Sugestões Práticas
-[3-4 ações específicas e detalhadas para melhorar]
+[3-4 ações específicas e detalhadas para melhorar, cada uma com emojis relevantes 🎯⏰💪]
 
 ## 🚀 Motivação
-[Mensagem encorajadora para próxima semana]
+[Mensagem encorajadora para próxima semana com emojis motivacionais 💪🌟✨🔥]
 
-IMPORTANTE: Sempre cite a fonte dos dados entre parênteses. Limite: 1000 palavras, tom amigável e detalhado.`;
+IMPORTANTE: 
+- SEMPRE use emojis relevantes dentro do texto para torná-lo mais visual e engajador
+- Sempre cite a fonte dos dados entre parênteses
+- Limite: 1000 palavras, tom amigável e detalhado
+- Use encoding UTF-8 para emojis aparecerem corretamente`;
 
   return prompt;
 };

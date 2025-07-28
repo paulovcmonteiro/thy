@@ -17,13 +17,18 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
       const title = lines[0].trim();
       const content = lines.slice(1).join('\n').trim();
       
-      // Identificar ícone da seção
+      // Extrair ícone da seção do próprio título (se houver)
       const getIcon = (title) => {
-        if (title.includes('🎉') || title.includes('Parabéns')) return '🎉';
-        if (title.includes('🔍') || title.includes('Insights')) return '🔍';
-        if (title.includes('📊') || title.includes('Comparação')) return '📊';
-        if (title.includes('💡') || title.includes('Sugestões')) return '💡';
-        if (title.includes('🚀') || title.includes('Motivação')) return '🚀';
+        // Extrair primeiro emoji do título, se houver
+        const emojiMatch = title.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u);
+        if (emojiMatch) return emojiMatch[0];
+        
+        // Fallback para casos sem emoji
+        if (title.includes('Parabéns')) return '🎉';
+        if (title.includes('Insights')) return '🔍';
+        if (title.includes('Comparação')) return '📊';
+        if (title.includes('Sugestões')) return '💡';
+        if (title.includes('Motivação')) return '🚀';
         return '📋';
       };
 
@@ -49,7 +54,7 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">{getIcon(title)}</span>
             <h3 className={`font-semibold ${colors.text}`}>
-              {title.replace(/[🎉🔍📊💡🚀📋]/g, '').trim()}
+              {title.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()}
             </h3>
           </div>
           
