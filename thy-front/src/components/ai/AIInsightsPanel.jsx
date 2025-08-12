@@ -1,12 +1,51 @@
 // src/components/ai/AIInsightsPanel.jsx - Painel de insights da IA
-import React, { useState } from 'react';
-import { Brain, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Brain, Sparkles, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { generateDebriefingInsights } from '../../services/aiService';
+import { saveAIInsights } from '../../firebase/debriefingService';
 
-const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyData = null, onInsightsGenerated }) => {
-  const [insights, setInsights] = useState(null);
+const AIInsightsPanel = ({ 
+  weekData, 
+  habitData, 
+  userResponses = {}, 
+  allWeeklyData = null, 
+  onInsightsGenerated,
+  savedInsights = null,
+  savedInsightsGeneratedAt = null
+}) => {
+  const [insights, setInsights] = useState(savedInsights);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Carregar insights salvos quando o componente monta ou quando savedInsights muda
+  useEffect(() => {
+    if (savedInsights && savedInsights !== insights) {
+      setInsights(savedInsights);
+      console.log('🤖 [AIInsightsPanel] Insights salvos carregados:', savedInsights.substring(0, 100) + '...');
+    }
+  }, [savedInsights]);
+
+  // Função para formatar tempo relativo
+  const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return '';
+    
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      const now = new Date();
+      const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+      
+      if (diffInMinutes < 1) return 'agora há pouco';
+      if (diffInMinutes < 60) return `há ${diffInMinutes} min`;
+      
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      if (diffInHours < 24) return `há ${diffInHours}h`;
+      
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `há ${diffInDays} dias`;
+    } catch (error) {
+      return '';
+    }
+  };
 
   // Função para renderizar insights estruturados
   const renderStructuredInsights = (text) => {
@@ -102,10 +141,26 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
     setError(null);
     
     try {
+      // 1. Gerar insights com a IA
       const result = await generateDebriefingInsights(weekData, habitData, userResponses, allWeeklyData);
       
       if (result.success) {
         setInsights(result.insights);
+        
+        // 2. Salvar insights no Firebase
+        try {
+          const saveResult = await saveAIInsights(weekData.weekStart, result.insights);
+          if (saveResult.success) {
+            console.log('✅ [AIInsightsPanel] Insights salvos no Firebase');
+          } else {
+            console.warn('⚠️ [AIInsightsPanel] Falha ao salvar insights:', saveResult.error);
+          }
+        } catch (saveError) {
+          console.error('❌ [AIInsightsPanel] Erro ao salvar insights:', saveError);
+          // Não mostra erro para o usuário, pois os insights já foram gerados
+        }
+        
+        // 3. Notificar componente pai
         onInsightsGenerated?.(result.insights);
       } else {
         setError(result.error || 'Erro ao gerar insights');
@@ -183,6 +238,14 @@ const AIInsightsPanel = ({ weekData, habitData, userResponses = {}, allWeeklyDat
         {insights && !loading && (
           <div className="space-y-4">
             <div className="bg-white/70 rounded-lg p-4 border border-purple-100">
+              {/* Timestamp dos insights */}
+              {savedInsightsGeneratedAt && (
+                <div className="flex items-center gap-1 mb-3 text-xs text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span>Gerado {formatTimeAgo(savedInsightsGeneratedAt)}</span>
+                </div>
+              )}
+              
               <div className="text-gray-700 leading-relaxed space-y-4">
                 {renderStructuredInsights(insights)}
               </div>

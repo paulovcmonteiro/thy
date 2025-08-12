@@ -48,6 +48,10 @@ import {
         notSoGood: debriefingData.notSoGood || '',
         improveNext: debriefingData.improveNext || '',
         
+        // Insights da IA (Novos campos)
+        aiInsights: debriefingData.aiInsights || null,
+        aiInsightsGeneratedAt: debriefingData.aiInsightsGeneratedAt || null,
+        
         updatedAt: serverTimestamp()
       };
   
@@ -348,6 +352,51 @@ import {
     }
   };
   
+  /**
+   * Salva insights da IA em um debriefing existente
+   * @param {string} weekDate - Data da semana no formato YYYY-MM-DD
+   * @param {string} insights - Texto dos insights gerados pela IA
+   * @returns {Promise<Object>} Resultado da operação
+   */
+  export const saveAIInsights = async (weekDate, insights) => {
+    try {
+      console.log('🤖 [debriefingService] Salvando insights da IA para semana:', weekDate);
+      
+      if (!weekDate || !insights) {
+        throw new Error('weekDate e insights são obrigatórios');
+      }
+  
+      // Buscar debriefing existente
+      const existingDebriefing = await getDebriefing(weekDate);
+      
+      if (!existingDebriefing.success || !existingDebriefing.data) {
+        throw new Error('Debriefing não encontrado para esta semana');
+      }
+  
+      // Atualizar apenas os campos relacionados à IA
+      const docRef = doc(db, DEBRIEFING_COLLECTION, existingDebriefing.data.id);
+      await updateDoc(docRef, {
+        aiInsights: insights,
+        aiInsightsGeneratedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('✅ [debriefingService] Insights da IA salvos com sucesso');
+      return { 
+        success: true, 
+        message: 'Insights salvos com sucesso'
+      };
+  
+    } catch (error) {
+      console.error('❌ [debriefingService] Erro ao salvar insights da IA:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        message: 'Erro ao salvar insights da IA'
+      };
+    }
+  };
+  
   export default {
     saveDebriefing,
     getDebriefing,
@@ -355,6 +404,7 @@ import {
     getAllDebriefings,
     getInProgressDebriefing,
     completeDebriefing,
+    saveAIInsights,
     getWeekSaturday,
     isTodaySaturday,
     formatWeekDate

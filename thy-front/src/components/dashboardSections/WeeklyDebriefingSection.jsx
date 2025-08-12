@@ -381,6 +381,8 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
                 improveNext: lastDebriefing.improveNext
               }}
               allWeeklyData={data?.weeklyCompletionData || null}
+              savedInsights={lastDebriefing.aiInsights || null}
+              savedInsightsGeneratedAt={lastDebriefing.aiInsightsGeneratedAt || null}
               onInsightsGenerated={(insights) => {
                 console.log('🤖 Insights gerados:', insights);
               }}
