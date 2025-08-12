@@ -361,13 +361,24 @@ import {
   export const saveAIInsights = async (weekDate, insights) => {
     try {
       console.log('🤖 [debriefingService] Salvando insights da IA para semana:', weekDate);
+      console.log('📅 [DEBUG] weekDate recebido:', weekDate, typeof weekDate);
       
       if (!weekDate || !insights) {
         throw new Error('weekDate e insights são obrigatórios');
       }
   
       // Buscar debriefing existente
+      console.log('🔍 [DEBUG] Buscando debriefing para:', weekDate);
       const existingDebriefing = await getDebriefing(weekDate);
+      console.log('📊 [DEBUG] Resultado da busca:', {
+        success: existingDebriefing.success,
+        hasData: !!existingDebriefing.data,
+        data: existingDebriefing.data ? {
+          id: existingDebriefing.data.id,
+          weekDate: existingDebriefing.data.weekDate,
+          status: existingDebriefing.data.status
+        } : null
+      });
       
       if (!existingDebriefing.success || !existingDebriefing.data) {
         throw new Error('Debriefing não encontrado para esta semana');

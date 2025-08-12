@@ -149,6 +149,9 @@ const AIInsightsPanel = ({
         
         // 2. Salvar insights no Firebase
         try {
+          console.log('📅 [DEBUG] weekData completo:', weekData);
+          console.log('📅 [DEBUG] weekData.weekStart:', weekData.weekStart, typeof weekData.weekStart);
+          
           const saveResult = await saveAIInsights(weekData.weekStart, result.insights);
           if (saveResult.success) {
             console.log('✅ [AIInsightsPanel] Insights salvos no Firebase');
