@@ -52,6 +52,25 @@ const AIInsightsPanel = ({
     return text.replace(/\*\*/g, ''); // Remove todos os **
   };
 
+  // Função para formatar texto em tópicos legíveis
+  const formatTextIntoTopics = (text, sectionTitle) => {
+    // Seções que devem ser formatadas em tópicos
+    const sectionsToFormat = ['Parabéns', 'Motivação'];
+    const shouldFormat = sectionsToFormat.some(section => sectionTitle.includes(section));
+    
+    if (!shouldFormat) return text;
+    
+    // Quebrar texto por frases (pontos finais, exclamações)
+    const sentences = text.split(/[.!]\s+/).filter(sentence => sentence.trim().length > 0);
+    
+    // Se há múltiplas frases, transformar em lista
+    if (sentences.length > 1) {
+      return sentences.map(sentence => `- ${sentence.trim()}${sentence.includes('.') || sentence.includes('!') ? '' : '.'}`).join('\n');
+    }
+    
+    return text;
+  };
+
   // Função para renderizar insights estruturados
   const renderStructuredInsights = (text) => {
     // Limpar asteriscos do texto completo antes de processar
@@ -61,7 +80,10 @@ const AIInsightsPanel = ({
     return sections.map((section, index) => {
       const lines = section.trim().split('\n');
       const title = lines[0].trim();
-      const content = lines.slice(1).join('\n').trim();
+      const rawContent = lines.slice(1).join('\n').trim();
+      
+      // Aplicar formatação em tópicos para seções específicas
+      const content = formatTextIntoTopics(rawContent, title);
       
       // Extrair ícone da seção do próprio título (se houver)
       const getIcon = (title) => {
