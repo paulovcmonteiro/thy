@@ -90,4 +90,5 @@ testarClaude();
 app.listen(3001, () => {
     console.log("🚀 Servidor ON na porta 3001!");
     console.log("📡 Rota disponível: POST http://localhost:3001/api/claude");
+    console.log("✅ Deploy automático configurado!");
 });
