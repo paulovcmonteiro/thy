@@ -47,9 +47,16 @@ const AIInsightsPanel = ({
     }
   };
 
+  // Função para limpar formatação Markdown (remover asteriscos)
+  const cleanMarkdownText = (text) => {
+    return text.replace(/\*\*/g, ''); // Remove todos os **
+  };
+
   // Função para renderizar insights estruturados
   const renderStructuredInsights = (text) => {
-    const sections = text.split('##').filter(section => section.trim());
+    // Limpar asteriscos do texto completo antes de processar
+    const cleanText = cleanMarkdownText(text);
+    const sections = cleanText.split('##').filter(section => section.trim());
     
     return sections.map((section, index) => {
       const lines = section.trim().split('\n');
