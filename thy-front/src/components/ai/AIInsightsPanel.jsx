@@ -151,8 +151,10 @@ const AIInsightsPanel = ({
         try {
           console.log('📅 [DEBUG] weekData completo:', weekData);
           console.log('📅 [DEBUG] weekData.weekStart:', weekData.weekStart, typeof weekData.weekStart);
+          console.log('📅 [DEBUG] weekData.weekEnd:', weekData.weekEnd, typeof weekData.weekEnd);
           
-          const saveResult = await saveAIInsights(weekData.weekStart, result.insights);
+          // Usar weekEnd (sábado) em vez de weekStart (domingo) pois debriefings são salvos com data do sábado
+          const saveResult = await saveAIInsights(weekData.weekEnd, result.insights);
           if (saveResult.success) {
             console.log('✅ [AIInsightsPanel] Insights salvos no Firebase');
           } else {
