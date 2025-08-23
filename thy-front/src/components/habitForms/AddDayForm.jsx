@@ -606,14 +606,38 @@ const AddDayForm = ({ isOpen, onClose }) => {
                       try {
                         datePicker.showPicker();
                       } catch (error) {
-                        // Se falhar, usar fallback para mobile real
+                        // Se falhar, usar método alternativo para mobile
+                        datePicker.style.opacity = '1';
+                        datePicker.style.pointerEvents = 'auto';
+                        datePicker.style.position = 'absolute';
+                        datePicker.style.zIndex = '9999';
                         datePicker.focus();
                         datePicker.click();
+                        
+                        // Esconder novamente após um tempo
+                        setTimeout(() => {
+                          datePicker.style.opacity = '0';
+                          datePicker.style.pointerEvents = 'none';
+                          datePicker.style.position = 'absolute';
+                          datePicker.style.zIndex = '-1';
+                        }, 100);
                       }
                     } else {
                       // Fallback para navegadores que não suportam showPicker()
+                      datePicker.style.opacity = '1';
+                      datePicker.style.pointerEvents = 'auto';
+                      datePicker.style.position = 'absolute';
+                      datePicker.style.zIndex = '9999';
                       datePicker.focus();
                       datePicker.click();
+                      
+                      // Esconder novamente após um tempo
+                      setTimeout(() => {
+                        datePicker.style.opacity = '0';
+                        datePicker.style.pointerEvents = 'none';
+                        datePicker.style.position = 'absolute';
+                        datePicker.style.zIndex = '-1';
+                      }, 100);
                     }
                   }
                 }}>
@@ -645,6 +669,12 @@ const AddDayForm = ({ isOpen, onClose }) => {
                 max={today}
                 className="sr-only"
                 disabled={loading}
+                style={{
+                  opacity: 0,
+                  pointerEvents: 'none',
+                  position: 'absolute',
+                  zIndex: -1
+                }}
               />
               {/* Peso */}
               <input
