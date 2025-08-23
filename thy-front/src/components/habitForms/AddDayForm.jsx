@@ -13,6 +13,10 @@ const AddDayForm = ({ isOpen, onClose }) => {
       const savedDate = localStorage.getItem('habitTracker_lastUsedDate');
       const today = new Date().toISOString().split('T')[0];
       
+      // 🐛 DEBUG: Log visual temporário
+      setDebugInfo(prev => [...prev, `🔍 localStorage: ${savedDate || 'null'}`]);
+      setDebugInfo(prev => [...prev, `📅 hoje: ${today}`]);
+      
       if (savedDate) {
         // Verificar se a data salva é válida e não é futura
         const savedDateObj = new Date(savedDate);
@@ -20,14 +24,19 @@ const AddDayForm = ({ isOpen, onClose }) => {
         
         if (!isNaN(savedDateObj.getTime()) && savedDateObj <= todayObj) {
           console.log('📅 [AddDayForm] Recuperando última data usada:', savedDate);
+          setDebugInfo(prev => [...prev, `✅ Usando data salva: ${savedDate}`]);
           return savedDate;
+        } else {
+          setDebugInfo(prev => [...prev, `❌ Data salva inválida: ${savedDate}`]);
         }
       }
       
       console.log('📅 [AddDayForm] Usando data de hoje:', today);
+      setDebugInfo(prev => [...prev, `📅 Usando hoje: ${today}`]);
       return today;
     } catch (error) {
       console.warn('⚠️ [AddDayForm] Erro ao recuperar última data, usando hoje');
+      setDebugInfo(prev => [...prev, `❌ Erro localStorage: ${error.message}`]);
       return new Date().toISOString().split('T')[0];
     }
   };
@@ -62,6 +71,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
 
   // Novo estado para controlar o passo do formulário mobile
   const [step, setStep] = useState(1);
+  
+  // 🐛 DEBUG: Estado para logs visuais temporários
+  const [debugInfo, setDebugInfo] = useState([]);
 
   // Lista de hábitos com emojis
   const habitsList = [
@@ -95,12 +107,15 @@ const AddDayForm = ({ isOpen, onClose }) => {
   const loadExistingDay = useCallback(async (dateISO) => {
     try {
       console.log('🔄 [AddDayForm] Carregando dados existentes para:', dateISO);
+      setDebugInfo(prev => [...prev, `🔄 Carregando dados para: ${dateISO}`]);
       
       const result = await getDayHabits(dateISO);
       
       if (result.success && result.data) {
         const existingData = result.data;
         console.log('✅ [AddDayForm] Dados encontrados:', existingData);
+        setDebugInfo(prev => [...prev, `✅ Dados encontrados para ${dateISO}`]);
+        setDebugInfo(prev => [...prev, `📊 Peso: ${existingData.peso || 'vazio'}, Hábitos: ${Object.keys(existingData).filter(k => existingData[k] === true).length}`]);
         
         // 🔧 CORREÇÃO: Atualizar APENAS os campos de dados, NÃO a data
         setFormData(prevData => ({
@@ -123,6 +138,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
         
       } else {
         console.log('ℹ️ [AddDayForm] Nenhum dado encontrado para', dateISO, '- novo dia');
+        setDebugInfo(prev => [...prev, `ℹ️ Nenhum dado encontrado para ${dateISO}`]);
         
         // 🔧 CORREÇÃO: Limpar APENAS os dados, não a data
         setFormData(prevData => ({
@@ -145,6 +161,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
       
     } catch (error) {
       console.error('❌ [AddDayForm] Erro ao carregar dados existentes:', error);
+      setDebugInfo(prev => [...prev, `❌ Erro ao carregar dados: ${error.message}`]);
       setHasLoadedExistingData(true);
       setSaveStatus('idle');
     }
@@ -353,6 +370,8 @@ const AddDayForm = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen && !isInitialized) {
       console.log('🚀 [AddDayForm] Inicializando formulário...');
+      setDebugInfo([]); // Limpar logs anteriores
+      setDebugInfo(prev => [...prev, `🚀 Inicializando formulário...`]);
       
       // Usar última data salva como data inicial
       const initialDate = getInitialDate();
@@ -361,6 +380,8 @@ const AddDayForm = ({ isOpen, onClose }) => {
         ...prev, 
         date: initialDate 
       }));
+      
+      setDebugInfo(prev => [...prev, `📅 Data definida: ${initialDate}`]);
       
       // Carregar dados da data inicial
       loadExistingDay(initialDate);
@@ -496,6 +517,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
       setSaveStatus('idle');
       setHasLoadedExistingData(false);
       setIsInitialized(false); // 🆕 Permitir nova inicialização
+      setDebugInfo([]); // 🐛 Limpar logs de debug
       onClose();
     }
   };
@@ -570,6 +592,16 @@ const AddDayForm = ({ isOpen, onClose }) => {
         
         {step === 1 && (
           <>
+            {/* 🐛 DEBUG: Área de debug visual temporário */}
+            {debugInfo.length > 0 && (
+              <div className="mx-4 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
+                <div className="font-bold text-yellow-800 mb-2">🐛 DEBUG MÓVEL:</div>
+                {debugInfo.map((info, idx) => (
+                  <div key={idx} className="text-yellow-700 mb-1">{info}</div>
+                ))}
+              </div>
+            )}
+            
             {/* Conteúdo principal com scroll se necessário */}
             <div className="flex-1 overflow-y-auto px-4 pt-2 pb-32 w-full">
               {/* Header de navegação com setas */}
