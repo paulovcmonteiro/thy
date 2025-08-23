@@ -2,41 +2,54 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Calendar, Save, Check, AlertCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import useDashboardData from '../../hooks/useDashboardData';
-import { getDayHabits } from '../../firebase/habitsService';
+import { getDayHabits, getMostRecentDateWithData } from '../../firebase/habitsService';
 
 const AddDayForm = ({ isOpen, onClose }) => {
   const { addNewDay, refreshData } = useDashboardData();
 
-  // 🆕 FUNÇÃO: RECUPERAR ÚLTIMA DATA USADA (APENAS PARA INICIALIZAÇÃO)
-  const getInitialDate = () => {
+  // 🆕 FUNÇÃO ROBUSTA: BUSCAR ÚLTIMA DATA COM DADOS REAIS
+  const getInitialDate = async () => {
     try {
-      const savedDate = localStorage.getItem('habitTracker_lastUsedDate');
       const today = new Date().toISOString().split('T')[0];
       
       // 🐛 DEBUG: Log visual temporário
-      setDebugInfo(prev => [...prev, `🔍 localStorage: ${savedDate || 'null'}`]);
       setDebugInfo(prev => [...prev, `📅 hoje: ${today}`]);
+      setDebugInfo(prev => [...prev, `🔍 Buscando última data com dados reais...`]);
       
-      if (savedDate) {
-        // Verificar se a data salva é válida e não é futura
-        const savedDateObj = new Date(savedDate);
+      // 1. Buscar a data mais recente com dados reais no banco
+      const mostRecentResult = await getMostRecentDateWithData();
+      
+      if (mostRecentResult.success && mostRecentResult.data) {
+        const recentDate = mostRecentResult.data.date;
+        setDebugInfo(prev => [...prev, `✅ Última data com dados: ${recentDate}`]);
+        
+        // Verificar se a data não é futura
+        const recentDateObj = new Date(recentDate);
         const todayObj = new Date(today);
         
-        if (!isNaN(savedDateObj.getTime()) && savedDateObj <= todayObj) {
-          console.log('📅 [AddDayForm] Recuperando última data usada:', savedDate);
-          setDebugInfo(prev => [...prev, `✅ Usando data salva: ${savedDate}`]);
-          return savedDate;
+        if (recentDateObj <= todayObj) {
+          console.log('📅 [AddDayForm] Usando última data com dados:', recentDate);
+          setDebugInfo(prev => [...prev, `✅ Usando data com dados: ${recentDate}`]);
+          
+          // Atualizar localStorage com a data correta
+          localStorage.setItem('habitTracker_lastUsedDate', recentDate);
+          
+          return recentDate;
         } else {
-          setDebugInfo(prev => [...prev, `❌ Data salva inválida: ${savedDate}`]);
+          setDebugInfo(prev => [...prev, `❌ Data com dados é futura: ${recentDate}`]);
         }
+      } else {
+        setDebugInfo(prev => [...prev, `ℹ️ Nenhuma data com dados encontrada`]);
       }
       
-      console.log('📅 [AddDayForm] Usando data de hoje:', today);
-      setDebugInfo(prev => [...prev, `📅 Usando hoje: ${today}`]);
+      // 2. Fallback: usar hoje
+      console.log('📅 [AddDayForm] Usando data de hoje como fallback:', today);
+      setDebugInfo(prev => [...prev, `📅 Fallback: usando hoje: ${today}`]);
       return today;
+      
     } catch (error) {
-      console.warn('⚠️ [AddDayForm] Erro ao recuperar última data, usando hoje');
-      setDebugInfo(prev => [...prev, `❌ Erro localStorage: ${error.message}`]);
+      console.warn('⚠️ [AddDayForm] Erro ao buscar última data, usando hoje');
+      setDebugInfo(prev => [...prev, `❌ Erro ao buscar dados: ${error.message}`]);
       return new Date().toISOString().split('T')[0];
     }
   };
@@ -366,27 +379,31 @@ const AddDayForm = ({ isOpen, onClose }) => {
     triggerAutoSave(newFormData);
   };
 
-  // 🔧 CORREÇÃO: useEffect SIMPLIFICADO - só roda na abertura do modal
+  // 🔧 CORREÇÃO: useEffect COM FUNÇÃO ASYNC PARA BUSCAR ÚLTIMA DATA COM DADOS
   useEffect(() => {
-    if (isOpen && !isInitialized) {
-      console.log('🚀 [AddDayForm] Inicializando formulário...');
-      setDebugInfo([]); // Limpar logs anteriores
-      setDebugInfo(prev => [...prev, `🚀 Inicializando formulário...`]);
-      
-      // Usar última data salva como data inicial
-      const initialDate = getInitialDate();
-      
-      setFormData(prev => ({ 
-        ...prev, 
-        date: initialDate 
-      }));
-      
-      setDebugInfo(prev => [...prev, `📅 Data definida: ${initialDate}`]);
-      
-      // Carregar dados da data inicial
-      loadExistingDay(initialDate);
-      setIsInitialized(true);
-    }
+    const initializeForm = async () => {
+      if (isOpen && !isInitialized) {
+        console.log('🚀 [AddDayForm] Inicializando formulário...');
+        setDebugInfo([]); // Limpar logs anteriores
+        setDebugInfo(prev => [...prev, `🚀 Inicializando formulário...`]);
+        
+        // Buscar última data com dados reais (função async)
+        const initialDate = await getInitialDate();
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          date: initialDate 
+        }));
+        
+        setDebugInfo(prev => [...prev, `📅 Data definida: ${initialDate}`]);
+        
+        // Carregar dados da data inicial
+        loadExistingDay(initialDate);
+        setIsInitialized(true);
+      }
+    };
+
+    initializeForm();
   }, [isOpen, isInitialized, loadExistingDay]);
 
   // 🆕 LIMPAR TIMEOUT AO DESMONTAR

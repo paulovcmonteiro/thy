@@ -332,6 +332,43 @@ import {
   };
   
   // 🆕 FUNÇÕES AUXILIARES PARA DADOS DIÁRIOS
+
+  // 🆕 Buscar a data mais recente com dados reais (para inicialização do formulário)
+  export const getMostRecentDateWithData = async () => {
+    try {
+      const q = query(
+        collection(db, DAILY_HABITS),
+        orderBy('date', 'desc') // Ordenar por data decrescente
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        return {
+          success: false,
+          error: 'Nenhum dado encontrado'
+        };
+      }
+
+      // Pegar o primeiro documento (mais recente)
+      const mostRecentDoc = querySnapshot.docs[0];
+      const mostRecentDate = mostRecentDoc.data().date;
+
+      return {
+        success: true,
+        data: {
+          date: mostRecentDate,
+          ...mostRecentDoc.data()
+        }
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  };
   
   // Buscar um dia específico
   export const getDayHabits = async (dateISO) => {
