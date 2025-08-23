@@ -202,8 +202,8 @@ const AddDayForm = ({ isOpen, onClose }) => {
     const newDateISO = targetDate.toISOString().split('T')[0];
     console.log('🔄 [AddDayForm] Navegando para:', newDateISO);
     
-    // Atualizar a data no formulário
-    setFormData(prev => ({ ...prev, date: newDateISO }));
+    // 🔧 CORREÇÃO: Usar handleInputChange para carregar dados da nova data
+    handleInputChange('date', newDateISO);
   };
 
   const goToPreviousDay = () => navigateToDay('prev');
