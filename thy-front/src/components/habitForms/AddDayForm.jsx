@@ -632,7 +632,25 @@ const AddDayForm = ({ isOpen, onClose }) => {
                   <ChevronLeft size={20} className="text-gray-600" />
                 </button>
                 
-                <div className="text-center cursor-pointer" onClick={() => document.getElementById('date-picker-mobile').showPicker()}>
+                <div className="text-center cursor-pointer" onClick={() => {
+                  const datePicker = document.getElementById('date-picker-mobile');
+                  if (datePicker) {
+                    // Tentar showPicker() primeiro (funciona no desktop)
+                    if (datePicker.showPicker) {
+                      try {
+                        datePicker.showPicker();
+                      } catch (error) {
+                        // Se falhar, usar fallback para mobile real
+                        datePicker.focus();
+                        datePicker.click();
+                      }
+                    } else {
+                      // Fallback para navegadores que não suportam showPicker()
+                      datePicker.focus();
+                      datePicker.click();
+                    }
+                  }
+                }}>
                   <div className="text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors">
                     {formatDateDisplay(formData.date)}
                   </div>
