@@ -95,6 +95,7 @@ import {
    * @param {string} weekDate - Data da semana no formato YYYY-MM-DD
    * @returns {Promise<Object>} Debriefing encontrado ou null
    */
+  
   export const getDebriefing = async (weekDate) => {
     try {
       console.log('🔍 [debriefingService] Buscando debriefing para semana:', weekDate);

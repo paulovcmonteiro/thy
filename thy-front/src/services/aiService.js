@@ -1,20 +1,24 @@
 // src/services/aiService.js - Serviço para integração com IA
-const AI_BASE_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:3001';
+const AI_BASE_URL = import.meta.env.VITE_AI_API_URL || 'https://thyapp.app.n8n.cloud/webhook';
 
 // Função para gerar insights inteligentes de debriefing
 export const generateDebriefingInsights = async (weekData, habitData, userResponses = {}, allWeeklyData = null) => {
   try {
     console.log('🤖 Gerando insights de debriefing...', { weekData, habitData });
 
-    // Construir prompt contextual
-    const prompt = buildDebriefingPrompt(weekData, habitData, userResponses, allWeeklyData);
+    // Construir prompt contextual - REMOVIDO: n8n faz isso agora
+    // const prompt = buildDebriefingPrompt(weekData, habitData, userResponses, allWeeklyData);
     
-    const response = await fetch(`${AI_BASE_URL}/api/claude`, {
+    const response = await fetch(`${AI_BASE_URL}/generate-insights`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ 
+        weekData, 
+        habitData, 
+        userResponses 
+      })
     });
 
     if (!response.ok) {
@@ -22,23 +26,19 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
     }
 
     const data = await response.json();
-    console.log('✅ Resposta completa da API:', data);
-    console.log('📝 Conteúdo dos insights:', data.response);
-    console.log('📏 Tamanho da resposta:', data.response ? data.response.length : 'undefined');
+    console.log('✅ Resposta completa do N8N:', data);
     
-    // Verificar se contém emojis
-    const hasEmojis = data.response ? /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(data.response) : false;
-    console.log('🔤 Contém emojis?', hasEmojis);
+    // N8N retorna estrutura diferente do backend antigo
+    // Backend antigo: { response: "texto" }
+    // N8N: { content: [{ text: "texto" }] }
+    const insights = data.content?.[0]?.text || data.response || 'Erro ao processar resposta';
     
-    // Mostrar todos os emojis encontrados
-    if (data.response && hasEmojis) {
-      const emojis = data.response.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu);
-      console.log('🎨 Emojis encontrados:', emojis ? emojis.join(' ') : 'nenhum');
-    }
+    console.log('📝 Conteúdo dos insights:', insights);
+    console.log('📏 Tamanho da resposta:', insights.length);
 
     return {
       success: true,
-      insights: data.response,
+      insights: insights,
       timestamp: new Date().toISOString()
     };
 
