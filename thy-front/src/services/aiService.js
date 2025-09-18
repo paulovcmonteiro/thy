@@ -5,6 +5,8 @@ const AI_BASE_URL = import.meta.env.VITE_AI_API_URL || 'https://thyapp.app.n8n.c
 export const generateDebriefingInsights = async (weekData, habitData, userResponses = {}, allWeeklyData = null) => {
   try {
     console.log('🤖 Gerando insights de debriefing...', { weekData, habitData });
+    console.log('🔗 URL sendo usada:', AI_BASE_URL);
+    console.log('🌍 VITE_AI_API_URL:', import.meta.env.VITE_AI_API_URL);
 
     // Construir prompt contextual - REMOVIDO: n8n faz isso agora
     // const prompt = buildDebriefingPrompt(weekData, habitData, userResponses, allWeeklyData);
