@@ -32,12 +32,12 @@ const AIChatSection = ({ data, isExpanded, onToggle }) => {
     scrollToBottom();
   }, [messages]);
 
-  // Carregar dados quando o componente for montado
+  // Carregar dados quando o componente for montado E dashboardData estiver disponível
   useEffect(() => {
-    if (isExpanded && chatState === 'idle') {
+    if (isExpanded && chatState === 'idle' && dashboardData && dashboardData.hasData) {
       loadDebriefingContext();
     }
-  }, [isExpanded]);
+  }, [isExpanded, dashboardData]);
 
   // Função para carregar contexto completo
   const loadDebriefingContext = async () => {
@@ -346,6 +346,16 @@ O que especificamente você gostaria de saber?`;
               <div className="text-center">
                 <Loader2 className="animate-spin mx-auto mb-2 text-purple-600" size={32} />
                 <p className="text-gray-600">Carregando contexto da sua semana...</p>
+              </div>
+            </div>
+          )}
+
+          {chatState === 'idle' && (!dashboardData || !dashboardData.hasData) && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <Loader2 className="animate-spin mx-auto mb-2 text-blue-600" size={32} />
+                <p className="text-gray-600">Aguardando dados do dashboard carregarem...</p>
+                <p className="text-gray-500 text-sm mt-2">Isso pode levar alguns segundos</p>
               </div>
             </div>
           )}
