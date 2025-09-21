@@ -88,8 +88,8 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       return { completudeData: [], weightData: [], currentWeek: null, last4Weeks: [] };
     }
 
-    // Pegar 4 semanas anteriores + semana selecionada
-    const startIndex = Math.max(0, selectedWeekIndex - 4);
+    // Pegar 8 semanas anteriores + semana selecionada
+    const startIndex = Math.max(0, selectedWeekIndex - 8);
     const endIndex = selectedWeekIndex + 1;
     const comparisonWeeks = allWeeks.slice(startIndex, endIndex);
     
@@ -159,7 +159,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
 
     let averageValue = 0;
     if (selectedIndex > 0) {
-      const startIndex = Math.max(0, selectedIndex - 4);
+      const startIndex = Math.max(0, selectedIndex - 8);
       const previousWeeks = habitData.slice(startIndex, selectedIndex);
       averageValue = previousWeeks.reduce((sum, week) => sum + week.valor, 0) / previousWeeks.length;
     }
@@ -568,9 +568,8 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
                   <h4 className="text-lg font-semibold text-gray-800 mb-4">📊 Visão Geral da Semana</h4>
                   {selectedWeek && data && (
                     <WeekTable 
-                      weekData={data} 
-                      weekStart={selectedWeek}
-                      weekEnd={selectedWeek}
+                      weekData={data}
+                      title={`Semana de ${new Date(selectedWeek).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`}
                       showTitle={false}
                     />
                   )}
