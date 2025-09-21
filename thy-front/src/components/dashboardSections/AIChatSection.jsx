@@ -66,14 +66,20 @@ const AIChatSection = ({ data, isExpanded, onToggle }) => {
       setPreviousWeekData(weekData);
 
       // 3. Coletar todos os dados para IA
+      console.log('🔍 [AIChatSection] Chamando collectDebriefingData com:');
+      console.log('  - debriefing:', debriefing);
+      console.log('  - weekData:', weekData);
+      console.log('  - dashboardData:', dashboardData);
+      
       const collectedData = collectDebriefingData(debriefing, weekData, dashboardData);
       
       if (!collectedData) {
+        console.error('❌ [AIChatSection] collectDebriefingData retornou null');
         setChatState('error');
         setMessages([{
           id: 1,
           type: 'system',
-          content: 'Erro ao coletar dados do debriefing. Tente novamente.',
+          content: 'Erro ao coletar dados do debriefing. Verifique o console para mais detalhes.',
           timestamp: new Date()
         }]);
         return;

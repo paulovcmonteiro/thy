@@ -11,8 +11,16 @@ const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyapp.app.n8n.clou
  * @returns {Object} Todos os dados estruturados para IA
  */
 export const collectDebriefingData = (lastDebriefing, previousWeekData, dashboardData) => {
+  console.log('🔍 [collectDebriefingData] Verificando dados recebidos:');
+  console.log('  - lastDebriefing:', !!lastDebriefing, lastDebriefing);
+  console.log('  - previousWeekData:', !!previousWeekData, Object.keys(previousWeekData || {}));
+  console.log('  - dashboardData:', !!dashboardData, dashboardData);
+  
   if (!lastDebriefing || !previousWeekData || !dashboardData) {
-    console.warn('Dados insuficientes para coletar contexto completo');
+    console.warn('❌ Dados insuficientes para coletar contexto completo');
+    console.warn('  - lastDebriefing presente:', !!lastDebriefing);
+    console.warn('  - previousWeekData presente:', !!previousWeekData);
+    console.warn('  - dashboardData presente:', !!dashboardData);
     return null;
   }
 
