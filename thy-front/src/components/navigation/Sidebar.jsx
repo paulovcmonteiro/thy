@@ -29,6 +29,12 @@ const Sidebar = ({ isOpen, currentSection, onNavigate, onClose, onLogout }) => {
       icon: '📊',
       description: 'Análise detalhada por hábito'
     },
+    { 
+      id: 'conversa-ia', 
+      label: 'Conversa com IA', 
+      icon: '🤖',
+      description: 'Chat contextualizado sobre sua semana'
+    },
   ];
 
   return (

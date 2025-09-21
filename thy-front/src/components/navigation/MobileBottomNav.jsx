@@ -23,6 +23,11 @@ const MobileBottomNav = ({ currentSection, onNavigate }) => {
       label: 'Performance', 
       icon: '📊'
     },
+    { 
+      id: 'conversa-ia', 
+      label: 'IA Chat', 
+      icon: '🤖'
+    },
   ];
 
   return (
