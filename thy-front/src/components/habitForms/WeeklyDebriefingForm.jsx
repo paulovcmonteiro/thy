@@ -11,6 +11,7 @@ import {
   completeDebriefing, 
   getWeekSaturday 
 } from '../../firebase/debriefingService';
+import { getDayHabits } from '../../firebase/habitsService';
 import DebriefingWeekSelector from './DebriefingWeekSelector';
 import WeekTable from '../common/WeekTable';
 
@@ -20,6 +21,10 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   // Estados principais
   const [currentPage, setCurrentPage] = useState(1); // 1, 2 ou 3
   const [selectedWeek, setSelectedWeek] = useState('');
+  
+  // Estados para a tabela da semana (similar ao WeeklyDebriefingSection)
+  const [weekTableData, setWeekTableData] = useState({});
+  const [weekTableLoading, setWeekTableLoading] = useState(false);
   
   // Estado do formulário
   const [formData, setFormData] = useState({
@@ -48,6 +53,95 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     { key: 'estudar', label: '📚 Estudar', description: 'Estudos ou aprendizado' },
     { key: 'descansar', label: '😴 Descansar', description: 'Descanso adequado' }
   ];
+
+  // Função para calcular datas da semana (copiada do WeeklyDebriefingSection)
+  const getWeekDates = (weekDate) => {
+    if (!weekDate) return [];
+    
+    try {
+      // weekDate pode ser qualquer dia da semana, vamos encontrar o domingo
+      const inputDate = new Date(weekDate + 'T00:00:00');
+      const dayOfWeek = inputDate.getDay(); // 0=domingo, 1=segunda, etc.
+      
+      // Calcular quantos dias voltar para chegar no domingo
+      const daysToSunday = dayOfWeek; // Se é terça (2), volta 2 dias
+      
+      // Encontrar o domingo da semana
+      const sunday = new Date(inputDate);
+      sunday.setDate(inputDate.getDate() - daysToSunday);
+      
+      console.log('🔍 [getWeekDates] Input:', weekDate, 'DayOfWeek:', dayOfWeek, 'Sunday calculado:', sunday.toISOString().split('T')[0]);
+      
+      const weekDates = [];
+      
+      // Gerar os 7 dias da semana (domingo a sábado)
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(sunday);
+        date.setDate(sunday.getDate() + i);
+        
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i];
+        
+        weekDates.push({
+          date: dateStr,
+          dayName: dayName,
+          dayNumber: date.getDate(),
+          isToday: false // Para debriefing nunca é "hoje"
+        });
+      }
+      
+      return weekDates;
+    } catch (error) {
+      console.error('Erro ao calcular datas da semana:', error);
+      return [];
+    }
+  };
+
+  // Função para carregar dados da semana (copiada do WeeklyDebriefingSection)
+  const loadWeekTableData = async (weekDate) => {
+    console.log('🔍 [loadWeekTableData] Iniciando com weekDate:', weekDate);
+    if (!weekDate) return;
+    
+    setWeekTableLoading(true);
+    
+    try {
+      const weekDates = getWeekDates(weekDate);
+      console.log('🔍 [loadWeekTableData] weekDates calculadas:', weekDates);
+      const weekData = {};
+      
+      for (const dayInfo of weekDates) {
+        try {
+          const dayData = await getDayHabits(dayInfo.date);
+          
+          if (dayData.success && dayData.data) {
+            weekData[dayInfo.date] = {
+              ...dayData.data,
+              dayInfo: dayInfo,
+              hasData: true
+            };
+          } else {
+            weekData[dayInfo.date] = {
+              dayInfo: dayInfo,
+              hasData: false
+            };
+          }
+        } catch (error) {
+          weekData[dayInfo.date] = {
+            dayInfo: dayInfo,
+            hasData: false
+          };
+        }
+      }
+      
+      console.log('🔍 [loadWeekTableData] weekData final:', weekData);
+      setWeekTableData(weekData);
+      
+    } catch (error) {
+      console.error('Erro ao carregar dados da semana:', error);
+    } finally {
+      setWeekTableLoading(false);
+    }
+  };
 
   // 🆕 FUNÇÃO: Determinar semana default baseada no dia da semana
   const getDefaultWeek = () => {
@@ -319,6 +413,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (selectedWeek && isOpen) {
       loadDebriefingData(selectedWeek);
+      loadWeekTableData(selectedWeek); // Carregar dados da tabela da semana
     }
   }, [selectedWeek, isOpen, loadDebriefingData]);
 
@@ -566,13 +661,21 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
               <div className="hidden lg:block mb-6">
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-4">📊 Visão Geral da Semana</h4>
-                  {selectedWeek && data && (
-                    <WeekTable 
-                      weekData={data}
-                      title={`Semana de ${new Date(selectedWeek).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`}
-                      showTitle={false}
-                    />
-                  )}
+                  <WeekTable
+                    weekData={weekTableData}
+                    title={`Semana de ${(() => {
+                      // Calcular o domingo da semana para mostrar data correta
+                      const inputDate = new Date(selectedWeek + 'T00:00:00');
+                      const dayOfWeek = inputDate.getDay();
+                      const sunday = new Date(inputDate);
+                      sunday.setDate(inputDate.getDate() - dayOfWeek);
+                      return sunday.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    })()}`}
+                    loading={weekTableLoading}
+                    showTitle={false}
+                    isEditable={false}
+                    onDayClick={null}
+                  />
                 </div>
               </div>
               
