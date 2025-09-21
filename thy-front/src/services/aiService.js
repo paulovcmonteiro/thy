@@ -5,9 +5,6 @@ const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyapp.app.n8n.clou
 // Função para gerar insights inteligentes de 
 export const generateDebriefingInsights = async (weekData, habitData, userResponses = {}, allWeeklyData = null) => {
   try {
-    console.log('🤖 Gerando insights de debriefing...', { weekData, habitData });
-    console.log('🔗 URL sendo usada:', AI_BASE_URL);
-    console.log('🌍 VITE_AI_API_URL:', import.meta.env.VITE_AI_API_URL);
 
     // Construir prompt contextual - REMOVIDO: n8n faz isso agora
     // const prompt = buildDebriefingPrompt(weekData, habitData, userResponses, allWeeklyData);
@@ -29,15 +26,11 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
     }
 
     const data = await response.json();
-    console.log('✅ Resposta completa do N8N:', data);
     
     // N8N retorna estrutura diferente do backend antigo
     // Backend antigo: { response: "texto" }
     // N8N: { content: [{ text: "texto" }] }
     const insights = data.content?.[0]?.text || data.response || 'Erro ao processar resposta';
-    
-    console.log('📝 Conteúdo dos insights:', insights);
-    console.log('📏 Tamanho da resposta:', insights.length);
 
     return {
       success: true,
@@ -46,7 +39,7 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
     };
 
   } catch (error) {
-    console.error('❌ Erro ao gerar insights:', error);
+    console.error('Erro ao gerar insights:', error);
     return {
       success: false,
       error: error.message,
@@ -57,7 +50,6 @@ export const generateDebriefingInsights = async (weekData, habitData, userRespon
 
 // Função para processar dados por dia no formato real
 const processHabitDataByDay = (habitData, weekStart, weekEnd) => {
-  console.log('🔄 Processando dados por dia:', { habitData, weekStart, weekEnd });
   
   // Lista de hábitos conhecidos
   const habitLabels = {
@@ -82,7 +74,6 @@ const processHabitDataByDay = (habitData, weekStart, weekEnd) => {
     }
   });
 
-  console.log('🎯 Hábitos encontrados:', Array.from(allHabits));
 
   // Processar performance de cada hábito
   const habitPerformance = Array.from(allHabits).map(habitKey => {
@@ -106,7 +97,6 @@ const processHabitDataByDay = (habitData, weekStart, weekEnd) => {
     };
   });
 
-  console.log('📊 Performance calculada:', habitPerformance);
   return habitPerformance;
 };
 
@@ -186,14 +176,12 @@ const processHistoricalComparison = (allWeeklyData, currentWeek) => {
 
 // Função para construir prompt contextual
 const buildDebriefingPrompt = (weekData, habitData, userResponses, allWeeklyData = null) => {
-  console.log('🔍 Debug buildDebriefingPrompt:', { weekData, habitData, userResponses });
   
   const weekStart = new Date(weekData.weekStart);
   const weekEnd = new Date(weekData.weekEnd);
   
   // Verificar se habitData existe e tem o formato correto
   if (!habitData || typeof habitData !== 'object') {
-    console.warn('⚠️ habitData inválido:', habitData);
     habitData = {};
   }
 

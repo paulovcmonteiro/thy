@@ -7,7 +7,6 @@ import CurrentWeekSection from './components/dashboardSections/CurrentWeekSectio
 import ProgressOverviewSection from './components/dashboardSections/ProgressOverviewSection';
 import WeeklyDebriefingSection from './components/dashboardSections/WeeklyDebriefingSection';
 import HabitPerformanceSection from './components/dashboardSections/HabitPerformanceSection';
-import HabitInsightsSection from './components/dashboardSections/HabitInsightsSection';
 import MobileBottomNav from './components/navigation/MobileBottomNav';
 import useDashboardData from './hooks/useDashboardData';
 import useDebriefingVisibility from './hooks/useDebriefingVisibility';
@@ -62,14 +61,6 @@ const Dashboard = ({ currentSection }) => {
             onToggle={() => {}}
           />
         );
-      case 'insights-principais':
-        return (
-          <HabitInsightsSection 
-            data={data}
-            isExpanded={true}
-            onToggle={() => {}}
-          />
-        );
       default:
         return (
           <CurrentWeekSection 
@@ -114,14 +105,6 @@ const Dashboard = ({ currentSection }) => {
             onToggle={() => {}}
           />
         );
-      case 'insights-principais':
-        return (
-          <HabitInsightsSection 
-            data={data}
-            isExpanded={true}
-            onToggle={() => {}}
-          />
-        );
       case 'dashboard':
       default:
         return null;
@@ -139,8 +122,6 @@ const Dashboard = ({ currentSection }) => {
         return 'Evolução Geral';
       case 'performance-habito':
         return 'Performance por Hábito';
-      case 'insights-principais':
-        return 'Insights Principais';
       default:
         return 'Semana Atual';
     }

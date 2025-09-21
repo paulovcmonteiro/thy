@@ -148,8 +148,6 @@ import {
    */
   export const getLastCompletedDebriefing = async () => {
     try {
-      console.log('🎯 [debriefingService] Buscando último debriefing finalizado...');
-      
       const q = query(
         collection(db, DEBRIEFING_COLLECTION),
         where('status', '==', 'completed'),
@@ -160,26 +158,24 @@ import {
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        console.log('ℹ️ [debriefingService] Nenhum debriefing finalizado encontrado');
         return { success: true, data: null };
       }
-  
+
       const doc = querySnapshot.docs[0];
       const data = doc.data();
-      
-      console.log('✅ [debriefingService] Último debriefing finalizado encontrado');
       return { 
         success: true, 
         data: {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate?.() || data.createdAt,
-          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+          completedAt: data.completedAt?.toDate?.() || data.completedAt
         }
       };
   
     } catch (error) {
-      console.error('❌ [debriefingService] Erro ao buscar último debriefing:', error);
+      console.error('Erro ao buscar último debriefing:', error);
       return { 
         success: false, 
         error: error.message 

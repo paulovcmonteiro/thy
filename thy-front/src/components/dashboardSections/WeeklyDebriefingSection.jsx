@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Star, TrendingUp, MessageSquare, Target, BarChart3 } from 'lucide-react';
 import WeeklyDebriefingForm from '../habitForms/WeeklyDebriefingForm';
 import WeekTable from '../common/WeekTable';
-import AIInsightsPanel from '../ai/AIInsightsPanel';
-import { getLastCompletedDebriefing, formatWeekDate } from '../../firebase/debriefingService';
+import { getLastCompletedDebriefing, formatWeekDate, getAllDebriefings } from '../../firebase/debriefingService';
 import { getDayHabits } from '../../firebase/habitsService';
 
 const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
@@ -51,7 +50,6 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
       const sunday = new Date(inputDate);
       sunday.setDate(inputDate.getDate() - daysToSunday);
       
-      console.log('🔍 [getPreviousWeekDates] Input:', weekDate, 'DayOfWeek:', dayOfWeek, 'Sunday calculado:', sunday.toISOString().split('T')[0]);
       
       const weekDates = [];
       
@@ -80,14 +78,12 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
 
   // Função para carregar dados da semana anterior
   const loadPreviousWeekData = async (weekDate) => {
-    console.log('🔍 [loadPreviousWeekData] Iniciando com weekDate:', weekDate);
     if (!weekDate) return;
     
     setWeekTableLoading(true);
     
     try {
       const weekDates = getPreviousWeekDates(weekDate);
-      console.log('🔍 [loadPreviousWeekData] weekDates calculadas:', weekDates);
       const weekData = {};
       
       for (const dayInfo of weekDates) {
@@ -114,7 +110,6 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
         }
       }
       
-      console.log('🔍 [loadPreviousWeekData] weekData final:', weekData);
       setPreviousWeekData(weekData);
       
     } catch (error) {
@@ -130,12 +125,8 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
 
   // Carregar dados da semana quando o debriefing for carregado
   useEffect(() => {
-    console.log('🔍 [WeeklyDebriefing] lastDebriefing mudou:', lastDebriefing);
     if (lastDebriefing && lastDebriefing.weekDate) {
-      console.log('🔍 [WeeklyDebriefing] Carregando dados para weekDate:', lastDebriefing.weekDate);
       loadPreviousWeekData(lastDebriefing.weekDate);
-    } else {
-      console.log('🔍 [WeeklyDebriefing] Sem weekDate disponível');
     }
   }, [lastDebriefing]);
 
@@ -351,42 +342,6 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
               </div>
             )}
 
-            {/* AI Insights Panel */}
-            <AIInsightsPanel
-              weekData={{
-                weekStart: (() => {
-                  const inputDate = new Date(lastDebriefing.weekDate + 'T00:00:00');
-                  const dayOfWeek = inputDate.getDay();
-                  const sunday = new Date(inputDate);
-                  sunday.setDate(inputDate.getDate() - dayOfWeek);
-                  return sunday.toISOString().split('T')[0];
-                })(),
-                weekEnd: (() => {
-                  const inputDate = new Date(lastDebriefing.weekDate + 'T00:00:00');
-                  const dayOfWeek = inputDate.getDay();
-                  const saturday = new Date(inputDate);
-                  saturday.setDate(inputDate.getDate() - dayOfWeek + 6);
-                  return saturday.toISOString().split('T')[0];
-                })()
-              }}
-              habitData={(() => {
-                console.log('🔍 [WeeklyDebriefingSection] Enviando habitData para IA:', previousWeekData);
-                return previousWeekData;
-              })()}
-              userResponses={{
-                habitComments: lastDebriefing.habitComments || {},
-                weekRating: lastDebriefing.weekRating,
-                proudOf: lastDebriefing.proudOf,
-                notSoGood: lastDebriefing.notSoGood,
-                improveNext: lastDebriefing.improveNext
-              }}
-              allWeeklyData={data?.weeklyCompletionData || null}
-              savedInsights={lastDebriefing.aiInsights || null}
-              savedInsightsGeneratedAt={lastDebriefing.aiInsightsGeneratedAt || null}
-              onInsightsGenerated={(insights) => {
-                console.log('🤖 Insights gerados:', insights);
-              }}
-            />
 
             {/* Metadados */}
             <div className="border-t pt-4">

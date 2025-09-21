@@ -70,7 +70,6 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       const sunday = new Date(inputDate);
       sunday.setDate(inputDate.getDate() - daysToSunday);
       
-      console.log('🔍 [getWeekDates] Input:', weekDate, 'DayOfWeek:', dayOfWeek, 'Sunday calculado:', sunday.toISOString().split('T')[0]);
       
       const weekDates = [];
       
@@ -99,14 +98,12 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
 
   // Função para carregar dados da semana (copiada do WeeklyDebriefingSection)
   const loadWeekTableData = async (weekDate) => {
-    console.log('🔍 [loadWeekTableData] Iniciando com weekDate:', weekDate);
     if (!weekDate) return;
     
     setWeekTableLoading(true);
     
     try {
       const weekDates = getWeekDates(weekDate);
-      console.log('🔍 [loadWeekTableData] weekDates calculadas:', weekDates);
       const weekData = {};
       
       for (const dayInfo of weekDates) {
@@ -133,7 +130,6 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
         }
       }
       
-      console.log('🔍 [loadWeekTableData] weekData final:', weekData);
       setWeekTableData(weekData);
       
     } catch (error) {
@@ -151,14 +147,12 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     if (dayOfWeek === 6) {
       // É sábado -> usar semana atual
       const currentWeekSaturday = getWeekSaturday(today);
-      console.log('📅 [WeeklyDebriefing] É sábado! Usando semana atual:', currentWeekSaturday);
       return currentWeekSaturday;
     } else {
       // Não é sábado -> usar semana anterior
       const lastWeek = new Date(today);
       lastWeek.setDate(today.getDate() - 7); // 7 dias atrás
       const lastWeekSaturday = getWeekSaturday(lastWeek);
-      console.log('📅 [WeeklyDebriefing] Não é sábado! Usando semana anterior:', lastWeekSaturday);
       return lastWeekSaturday;
     }
   };
@@ -273,8 +267,6 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
 
     try {
       setSaveStatus('saving');
-      console.log('💾 [WeeklyDebriefing] Auto-salvando...', selectedWeek);
-
       const result = await saveDebriefing(selectedWeek, dataToSave);
       
       if (result.success) {
@@ -287,7 +279,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       
     } catch (error) {
       setSaveStatus('error');
-      console.error('❌ [WeeklyDebriefing] Erro no auto-save:', error);
+      console.error('Erro no auto-save:', error);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
   }, [selectedWeek, hasLoadedData]);
@@ -333,8 +325,6 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   // Carregar dados do debriefing
   const loadDebriefingData = useCallback(async (weekDate) => {
     try {
-      console.log('🔄 [WeeklyDebriefing] Carregando dados para semana:', weekDate);
-      
       const result = await getDebriefing(weekDate);
       
       if (result.success && result.data) {
@@ -346,7 +336,6 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
           notSoGood: debriefingData.notSoGood || '',
           improveNext: debriefingData.improveNext || ''
         });
-        console.log('✅ [WeeklyDebriefing] Dados carregados');
       } else {
         // Resetar formulário para nova semana
         setFormData({
@@ -356,13 +345,12 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
           notSoGood: '',
           improveNext: ''
         });
-        console.log('ℹ️ [WeeklyDebriefing] Nova semana, formulário resetado');
       }
       
       setHasLoadedData(true);
       
     } catch (error) {
-      console.error('❌ [WeeklyDebriefing] Erro ao carregar dados:', error);
+      console.error('Erro ao carregar dados do debriefing:', error);
       setHasLoadedData(true);
     }
   }, []);
@@ -387,7 +375,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       }
       
     } catch (error) {
-      console.error('❌ [WeeklyDebriefing] Erro ao finalizar:', error);
+      console.error('Erro ao finalizar debriefing:', error);
       alert('❌ Erro inesperado ao finalizar debriefing');
     }
   };

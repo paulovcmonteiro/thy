@@ -23,11 +23,6 @@ const MobileBottomNav = ({ currentSection, onNavigate }) => {
       label: 'Performance', 
       icon: '📊'
     },
-    { 
-      id: 'insights-principais', 
-      label: 'Insights', 
-      icon: '💡'
-    }
   ];
 
   return (

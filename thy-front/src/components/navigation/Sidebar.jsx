@@ -29,12 +29,6 @@ const Sidebar = ({ isOpen, currentSection, onNavigate, onClose, onLogout }) => {
       icon: '📊',
       description: 'Análise detalhada por hábito'
     },
-    { 
-      id: 'insights-principais', 
-      label: 'Insights Principais', 
-      icon: '💡',
-      description: 'Descobertas e padrões'
-    }
   ];
 
   return (
