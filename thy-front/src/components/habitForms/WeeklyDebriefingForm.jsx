@@ -12,6 +12,7 @@ import {
   getWeekSaturday 
 } from '../../firebase/debriefingService';
 import DebriefingWeekSelector from './DebriefingWeekSelector';
+import WeekTable from '../common/WeekTable';
 
 const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   const { data } = useDashboardData();
@@ -560,6 +561,21 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
           {currentPage === 2 && (
             <div className="space-y-6">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">🎯 Análise por Hábito</h3>
+              
+              {/* Tabela da semana - DESKTOP ONLY */}
+              <div className="hidden lg:block mb-6">
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">📊 Visão Geral da Semana</h4>
+                  {selectedWeek && data && (
+                    <WeekTable 
+                      weekData={data} 
+                      weekStart={selectedWeek}
+                      weekEnd={selectedWeek}
+                      showTitle={false}
+                    />
+                  )}
+                </div>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {habitsList.map(habit => {

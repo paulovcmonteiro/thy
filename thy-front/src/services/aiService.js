@@ -155,10 +155,10 @@ const processHistoricalComparison = (allWeeklyData, currentWeek) => {
     return null; // Não há dados suficientes para comparação
   }
 
-  // Pegar as últimas 4 semanas (excluindo a atual)
+  // Pegar as últimas 8 semanas (excluindo a atual)
   const historicalWeeks = allWeeklyData
     .filter(week => week.semana !== currentWeek)
-    .slice(-4);
+    .slice(-8);
 
   if (historicalWeeks.length === 0) return null;
 
