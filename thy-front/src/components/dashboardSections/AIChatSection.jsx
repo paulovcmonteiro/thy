@@ -7,7 +7,8 @@ import { getDayHabits } from '../../firebase/habitsService';
 import useDashboardData from '../../hooks/useDashboardData';
 
 const AIChatSection = ({ data, isExpanded, onToggle }) => {
-  const { data: dashboardData } = useDashboardData();
+  const dashboardHookResult = useDashboardData();
+  const dashboardData = dashboardHookResult.data;
   
   // Estados principais
   const [chatState, setChatState] = useState('idle'); // idle, loading, ready, error
@@ -34,10 +35,10 @@ const AIChatSection = ({ data, isExpanded, onToggle }) => {
 
   // Carregar dados quando o componente for montado E dashboardData estiver disponível
   useEffect(() => {
-    if (isExpanded && chatState === 'idle' && dashboardData && dashboardData.hasData) {
+    if (isExpanded && chatState === 'idle' && dashboardData && !dashboardHookResult.loading && !dashboardHookResult.error) {
       loadDebriefingContext();
     }
-  }, [isExpanded, dashboardData]);
+  }, [isExpanded, dashboardData, dashboardHookResult.loading, dashboardHookResult.error]);
 
   // Função para carregar contexto completo
   const loadDebriefingContext = async () => {
@@ -350,7 +351,7 @@ O que especificamente você gostaria de saber?`;
             </div>
           )}
 
-          {chatState === 'idle' && (!dashboardData || !dashboardData.hasData) && (
+          {chatState === 'idle' && (!dashboardData || dashboardHookResult.loading || dashboardHookResult.error) && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <Loader2 className="animate-spin mx-auto mb-2 text-blue-600" size={32} />
