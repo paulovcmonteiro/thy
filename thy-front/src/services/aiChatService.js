@@ -309,6 +309,7 @@ export const chatWithAI = async (debriefingData, userMessage) => {
     }
 
     const data = await response.json();
+    console.log(response);
     
     return {
       success: true,
