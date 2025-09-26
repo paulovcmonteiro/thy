@@ -207,14 +207,13 @@ O que você gostaria de saber ou discutir sobre essa semana?`,
     setSending(true);
 
     try {
-      // TODO: Implementar chamada real para N8N
-      // Por enquanto, resposta mockada
-      const response = await mockAIResponse(userMessage.content, contextData);
+      // Chamar IA real via N8N
+      const response = await chatWithAI(contextData, userMessage.content);
       
       const aiMessage = {
         id: Date.now() + 1,
         type: 'ai',
-        content: response,
+        content: response.success ? response.response : response.fallbackMessage,
         timestamp: new Date()
       };
 
@@ -226,7 +225,7 @@ O que você gostaria de saber ou discutir sobre essa semana?`,
       const errorMessage = {
         id: Date.now() + 1,
         type: 'system',
-        content: 'Erro ao enviar mensagem. Tente novamente.',
+        content: '❌ Não consegui conectar com a IA. Verifique se o N8N está ativo e tente novamente.',
         timestamp: new Date()
       };
 
@@ -236,39 +235,6 @@ O que você gostaria de saber ou discutir sobre essa semana?`,
     }
   };
 
-  // Resposta mockada (remover quando integrar com N8N)
-  const mockAIResponse = async (message, data) => {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simular delay
-    
-    if (message.toLowerCase().includes('hábito')) {
-      const bestHabit = data.metadata.weekSummary.bestHabit;
-      const worstHabit = data.metadata.weekSummary.worstHabit;
-      return `Sobre seus hábitos dessa semana:
-
-🏆 **Melhor performance**: ${bestHabit.habit} com ${bestHabit.value}% de completude
-⚠️ **Precisa de atenção**: ${worstHabit.habit} com ${worstHabit.value}% de completude
-
-Completude geral da semana: ${data.metadata.weekSummary.weekCompletude}%`;
-    }
-    
-    if (message.toLowerCase().includes('peso')) {
-      const weightData = data.evolutionData.weightData;
-      if (weightData.length > 0) {
-        const currentWeight = weightData[weightData.length - 1];
-        return `Sobre seu peso: ${currentWeight.peso}kg na semana analisada. Quer que eu analise a evolução ao longo das últimas semanas?`;
-      }
-    }
-    
-    return `Entendi sua pergunta sobre: "${message}". 
-
-Baseado nos seus dados dessa semana, posso te ajudar com análises sobre:
-• Performance dos hábitos
-• Evolução do peso
-• Padrões nas suas observações diárias
-• Comparação com semanas anteriores
-
-O que especificamente você gostaria de saber?`;
-  };
 
   // Handle Enter key
   const handleKeyPress = (e) => {
