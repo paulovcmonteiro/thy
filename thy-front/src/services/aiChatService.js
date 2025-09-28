@@ -309,11 +309,23 @@ export const chatWithAI = async (debriefingData, userMessage) => {
     }
 
     const data = await response.json();
-    console.log(response);
+    console.log('🤖 [N8N] Response object:', response);
+    console.log('🤖 [N8N] Response data:', data);
+    console.log('🤖 [N8N] Data keys:', Object.keys(data));
+    
+    // Tentar diferentes formatos de resposta do N8N
+    let aiResponse = data.response || 
+                    data.content?.[0]?.text || 
+                    data.text || 
+                    data.output || 
+                    data.result ||
+                    JSON.stringify(data);
+    
+    console.log('🤖 [N8N] Final AI response:', aiResponse);
     
     return {
       success: true,
-      response: data.response || data.content?.[0]?.text || 'Resposta não encontrada',
+      response: aiResponse,
       timestamp: new Date().toISOString()
     };
 
