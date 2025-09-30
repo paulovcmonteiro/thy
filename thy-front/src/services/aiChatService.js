@@ -292,7 +292,12 @@ const getWorstHabit = (habitAnalysis) => {
  */
 export const chatWithAI = async (debriefingData, userMessage) => {
   try {
-    const response = await fetch(`${AI_BASE_URL}/chat-ai`, {
+    const fullUrl = `${AI_BASE_URL}/chat-ai`;
+    console.log('🌐 [URL CHECK] AI_BASE_URL:', AI_BASE_URL);
+    console.log('🌐 [URL CHECK] Full URL:', fullUrl);
+    console.log('🌐 [URL CHECK] ENV VITE_N8N_URL:', import.meta.env.VITE_N8N_URL);
+    
+    const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
