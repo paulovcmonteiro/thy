@@ -17,11 +17,13 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
       const [day, month] = semanaStr.split('/');
       
       // 🔧 CORREÇÃO: Determinar ano correto baseado no mês
-      let year = new Date().getFullYear(); // 2025
+      const currentDate = new Date();
+      let year = currentDate.getFullYear(); // 2024
+      const currentMonth = currentDate.getMonth(); // 0-11 (dezembro = 11)
       
-      // Se o mês é dezembro e estamos em janeiro ou posterior, é do ano anterior
-      if (parseInt(month) === 12 && new Date().getMonth() > 0) {
-        year = year - 1; // 29/12 será do ano anterior apenas se já passamos de janeiro
+      // Se o mês é dezembro e já estamos em janeiro do ano seguinte
+      if (parseInt(month) === 12 && currentMonth === 0) {
+        year = year - 1; // dezembro é do ano anterior se já estamos em janeiro
       }
       
       // Criar data com ano correto
