@@ -20,8 +20,8 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
       let year = new Date().getFullYear(); // 2025
       
       // Se o mês é dezembro e estamos em janeiro ou posterior, é do ano anterior
-      if (parseInt(month) === 12 && new Date().getMonth() >= 0) {
-        year = year - 1; // 29/12 será 2024
+      if (parseInt(month) === 12 && new Date().getMonth() > 0) {
+        year = year - 1; // 29/12 será do ano anterior apenas se já passamos de janeiro
       }
       
       // Criar data com ano correto
