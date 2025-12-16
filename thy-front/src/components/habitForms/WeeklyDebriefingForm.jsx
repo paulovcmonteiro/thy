@@ -160,27 +160,19 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   // Função para obter dados das últimas 4 semanas vs atual
   const getWeekComparison = () => {
     if (!data || !selectedWeek) {
-      console.log('🔍 [getWeekComparison] Sem data ou selectedWeek:', { data: !!data, selectedWeek });
       return { completudeData: [], weightData: [], currentWeek: null, last4Weeks: [] };
     }
 
     const allWeeks = data.weeklyCompletionData;
     const allWeights = data.weightData;
     
-    console.log('🔍 [getWeekComparison] Procurando semana:', selectedWeek);
-    console.log('🔍 [getWeekComparison] Semanas disponíveis:', allWeeks?.map(w => `${w.semana} -> ${convertSemanaToSaturday(w.semana)}`));
-    
     // Encontrar índice da semana selecionada
     const selectedWeekIndex = allWeeks.findIndex(week => {
       const weekSaturday = convertSemanaToSaturday(week.semana);
-      console.log('🔍 [getWeekComparison] Comparando:', { weekSemana: week.semana, weekSaturday, selectedWeek, match: weekSaturday === selectedWeek });
       return weekSaturday === selectedWeek;
     });
 
-    console.log('🔍 [getWeekComparison] Índice encontrado:', selectedWeekIndex);
-
     if (selectedWeekIndex === -1) {
-      console.log('❌ [getWeekComparison] Semana não encontrada!');
       return { completudeData: [], weightData: [], currentWeek: null, last4Weeks: [] };
     }
 
@@ -218,12 +210,14 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     try {
       const [day, month] = semanaStr.split('/');
       
-      // Determinar ano correto baseado no mês
-      let year = new Date().getFullYear();
+      // 🔧 CORREÇÃO: Usar mesma lógica do DebriefingWeekSelector
+      const currentDate = new Date();
+      let year = currentDate.getFullYear(); // ano atual
+      const currentMonth = currentDate.getMonth() + 1; // 1-12 (dezembro = 12)
       
-      // Se o mês é dezembro e estamos em janeiro ou posterior, é do ano anterior
-      if (parseInt(month) === 12 && new Date().getMonth() >= 0) {
-        year = year - 1;
+      // Se o mês é dezembro e já estamos em janeiro do ano seguinte
+      if (parseInt(month) === 12 && currentMonth === 1) {
+        year = year - 1; // dezembro é do ano anterior se já estamos em janeiro
       }
       
       const date = new Date(year, parseInt(month) - 1, parseInt(day));
