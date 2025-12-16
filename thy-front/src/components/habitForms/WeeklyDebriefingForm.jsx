@@ -160,19 +160,27 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   // Função para obter dados das últimas 4 semanas vs atual
   const getWeekComparison = () => {
     if (!data || !selectedWeek) {
+      console.log('🔍 [getWeekComparison] Sem data ou selectedWeek:', { data: !!data, selectedWeek });
       return { completudeData: [], weightData: [], currentWeek: null, last4Weeks: [] };
     }
 
     const allWeeks = data.weeklyCompletionData;
     const allWeights = data.weightData;
     
+    console.log('🔍 [getWeekComparison] Procurando semana:', selectedWeek);
+    console.log('🔍 [getWeekComparison] Semanas disponíveis:', allWeeks?.map(w => `${w.semana} -> ${convertSemanaToSaturday(w.semana)}`));
+    
     // Encontrar índice da semana selecionada
     const selectedWeekIndex = allWeeks.findIndex(week => {
       const weekSaturday = convertSemanaToSaturday(week.semana);
+      console.log('🔍 [getWeekComparison] Comparando:', { weekSemana: week.semana, weekSaturday, selectedWeek, match: weekSaturday === selectedWeek });
       return weekSaturday === selectedWeek;
     });
 
+    console.log('🔍 [getWeekComparison] Índice encontrado:', selectedWeekIndex);
+
     if (selectedWeekIndex === -1) {
+      console.log('❌ [getWeekComparison] Semana não encontrada!');
       return { completudeData: [], weightData: [], currentWeek: null, last4Weeks: [] };
     }
 
