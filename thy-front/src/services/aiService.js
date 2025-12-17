@@ -1,6 +1,6 @@
 // src/services/aiService.js - Serviço para integração com IA
 // Forçando uso do n8n ignorando variável de ambiente
-const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyapp.app.n8n.cloud/webhook';
+const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyself.app.n8n.cloud/webhook';
 
 // Função para gerar insights inteligentes de 
 export const generateDebriefingInsights = async (weekData, habitData, userResponses = {}, allWeeklyData = null) => {
