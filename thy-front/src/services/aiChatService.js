@@ -1,7 +1,7 @@
 // src/services/aiChatService.js - Serviço para Chat com IA
 import { getGeneralClassification, getHabitClassification } from '../data/metricsCalculations';
 
-const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyself.app.n8n.cloud/webhook-test';
+const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyself.app.n8n.cloud/webhook';
 
 /**
  * Coleta TODOS os dados do debriefing para enviar à IA
