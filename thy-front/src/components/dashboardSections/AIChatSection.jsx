@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, Loader2, Brain, Calendar, AlertCircle } from 'lucide-react';
 import { collectDebriefingData, chatWithAI } from '../../services/aiChatService';
-import { getLastCompletedDebriefing } from '../../firebase/debriefingService';
+import { getLastCompletedDebriefing, getAllDebriefings } from '../../firebase/debriefingService';
 import { getDayHabits } from '../../firebase/habitsService';
 import useDashboardData from '../../hooks/useDashboardData';
 
@@ -62,17 +62,30 @@ const AIChatSection = ({ data, isExpanded, onToggle }) => {
       const debriefing = debriefingResult.data;
       setLastDebriefing(debriefing);
 
-      // 2. Carregar dados diários da semana
+      // 2. Carregar dados diários da semana atual
       const weekData = await loadWeekData(debriefing.weekDate);
       setPreviousWeekData(weekData);
 
-      // 3. Coletar todos os dados para IA
+      // 3. 🆕 Carregar TODOS os debriefings históricos
+      console.log('🔍 [AIChatSection] Carregando histórico de debriefings...');
+      const allDebriefingsResult = await getAllDebriefings();
+      const allDebriefings = allDebriefingsResult.success ? allDebriefingsResult.data : [];
+      console.log('📚 [AIChatSection] Debriefings históricos carregados:', allDebriefings.length);
+
+      // 4. 🆕 Carregar dados diários das últimas 12 semanas
+      console.log('🔍 [AIChatSection] Carregando dados históricos das últimas 12 semanas...');
+      const historicalWeekData = await loadHistoricalWeekData(12);
+      console.log('📅 [AIChatSection] Semanas históricas carregadas:', Object.keys(historicalWeekData).length);
+
+      // 5. Coletar todos os dados para IA
       console.log('🔍 [AIChatSection] Chamando collectDebriefingData com:');
       console.log('  - debriefing:', debriefing);
       console.log('  - weekData:', weekData);
       console.log('  - dashboardData:', dashboardData);
+      console.log('  - allDebriefings:', allDebriefings.length);
+      console.log('  - historicalWeekData:', Object.keys(historicalWeekData).length);
       
-      const collectedData = collectDebriefingData(debriefing, weekData, dashboardData);
+      const collectedData = collectDebriefingData(debriefing, weekData, dashboardData, allDebriefings, historicalWeekData);
       
       if (!collectedData) {
         console.error('❌ [AIChatSection] collectDebriefingData retornou null');
@@ -188,6 +201,66 @@ O que você gostaria de saber ou discutir sobre essa semana?`,
     } catch (error) {
       console.error('Erro ao calcular datas da semana:', error);
       return [];
+    }
+  };
+
+  // 🆕 Carregar dados históricos das últimas N semanas
+  const loadHistoricalWeekData = async (numberOfWeeks = 12) => {
+    if (!dashboardData?.weeklyCompletionData) {
+      console.warn('❌ Sem dados de semanas no dashboardData');
+      return {};
+    }
+
+    console.log('📅 [loadHistoricalWeekData] Carregando dados de', numberOfWeeks, 'semanas...');
+    
+    // Pegar as últimas N semanas dos dados do dashboard
+    const allWeeks = dashboardData.weeklyCompletionData;
+    const recentWeeks = allWeeks.slice(-numberOfWeeks); // Últimas N semanas
+    
+    const historicalData = {};
+    
+    for (const week of recentWeeks) {
+      try {
+        // Converter formato DD/MM para data do sábado
+        const weekSaturday = convertSemanaToSaturday(week.semana);
+        if (!weekSaturday) continue;
+        
+        console.log(`📅 [loadHistoricalWeekData] Carregando semana ${week.semana} (${weekSaturday})`);
+        
+        // Carregar dados diários da semana
+        const weekData = await loadWeekData(weekSaturday);
+        
+        // Só incluir se tiver dados
+        if (Object.keys(weekData).length > 0) {
+          historicalData[weekSaturday] = weekData;
+        }
+      } catch (error) {
+        console.error(`❌ Erro ao carregar semana ${week.semana}:`, error);
+      }
+    }
+    
+    console.log('📅 [loadHistoricalWeekData] Concluído. Semanas carregadas:', Object.keys(historicalData).length);
+    return historicalData;
+  };
+
+  // Função utilitária para converter semana DD/MM -> YYYY-MM-DD
+  const convertSemanaToSaturday = (semanaStr) => {
+    try {
+      const [day, month] = semanaStr.split('/');
+      const currentDate = new Date();
+      let year = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      
+      // Se o mês é dezembro e já estamos em janeiro do ano seguinte
+      if (parseInt(month) === 12 && currentMonth === 1) {
+        year = year - 1;
+      }
+      
+      const date = new Date(year, parseInt(month) - 1, parseInt(day));
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      console.warn('⚠️ Erro ao converter semana:', semanaStr, error);
+      return null;
     }
   };
 

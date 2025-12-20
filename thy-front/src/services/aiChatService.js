@@ -6,15 +6,19 @@ const AI_BASE_URL = import.meta.env.VITE_N8N_URL || 'https://thyself.app.n8n.clo
 /**
  * Coleta TODOS os dados do debriefing para enviar à IA
  * @param {Object} lastDebriefing - Dados do último debriefing finalizado
- * @param {Object} previousWeekData - Dados diários da semana (do WeeklyDebriefingSection)
+ * @param {Object} previousWeekData - Dados diários da semana atual (do WeeklyDebriefingSection)
  * @param {Object} dashboardData - Dados gerais do dashboard (useDashboardData)
+ * @param {Array} allDebriefings - TODOS os debriefings históricos
+ * @param {Object} historicalWeekData - Dados diários das últimas 12 semanas
  * @returns {Object} Todos os dados estruturados para IA
  */
-export const collectDebriefingData = (lastDebriefing, previousWeekData, dashboardData) => {
+export const collectDebriefingData = (lastDebriefing, previousWeekData, dashboardData, allDebriefings = [], historicalWeekData = {}) => {
   console.log('🔍 [collectDebriefingData] Verificando dados recebidos:');
   console.log('  - lastDebriefing:', !!lastDebriefing, lastDebriefing);
   console.log('  - previousWeekData:', !!previousWeekData, Object.keys(previousWeekData || {}));
   console.log('  - dashboardData:', !!dashboardData, dashboardData);
+  console.log('  - allDebriefings:', allDebriefings.length, 'debriefings históricos');
+  console.log('  - historicalWeekData:', Object.keys(historicalWeekData).length, 'semanas de dados diários');
   
   if (!lastDebriefing || !previousWeekData || !dashboardData) {
     console.warn('❌ Dados insuficientes para coletar contexto completo');
@@ -49,15 +53,26 @@ export const collectDebriefingData = (lastDebriefing, previousWeekData, dashboar
   // 5. DADOS DIÁRIOS DETALHADOS (com observações!)
   const dailyData = processDailyData(previousWeekData);
 
+  // 6. 🆕 HISTÓRICO COMPLETO DE DEBRIEFINGS
+  const debriefingHistory = processDebriefingHistory(allDebriefings);
+
+  // 7. 🆕 DADOS DIÁRIOS DAS ÚLTIMAS 12 SEMANAS
+  const historicalDailyData = processHistoricalDailyData(historicalWeekData);
+
   return {
     weekData,
     evolutionData,
     habitAnalysis,
     weekReflection,
     dailyData,
+    // 🆕 NOVOS DADOS HISTÓRICOS
+    debriefingHistory,
+    historicalDailyData,
     // Meta-dados úteis
     metadata: {
       totalDaysWithData: Object.keys(dailyData).length,
+      totalHistoricalDebriefings: debriefingHistory.length,
+      totalHistoricalWeeks: Object.keys(historicalDailyData).length,
       weekSummary: generateWeekSummary(dailyData, habitAnalysis),
       collectedAt: new Date().toISOString()
     }
@@ -282,6 +297,111 @@ const getWorstHabit = (habitAnalysis) => {
   });
   
   return worst;
+};
+
+/**
+ * 🆕 Processa histórico completo de debriefings
+ * @param {Array} allDebriefings - Array com todos os debriefings
+ * @returns {Array} Debriefings processados e ordenados
+ */
+const processDebriefingHistory = (allDebriefings) => {
+  if (!allDebriefings || allDebriefings.length === 0) {
+    return [];
+  }
+
+  // Ordenar por data (mais recente primeiro) e processar
+  return allDebriefings
+    .filter(debriefing => debriefing.status === 'completed') // Só debriefings finalizados
+    .sort((a, b) => new Date(b.weekDate) - new Date(a.weekDate))
+    .map(debriefing => ({
+      weekDate: debriefing.weekDate,
+      weekFormatted: new Date(debriefing.weekDate).toLocaleDateString('pt-BR'),
+      weekRating: debriefing.weekRating,
+      proudOf: debriefing.proudOf || '',
+      notSoGood: debriefing.notSoGood || '',
+      improveNext: debriefing.improveNext || '',
+      habitComments: debriefing.habitComments || {},
+      createdAt: debriefing.createdAt,
+      // Meta-informações úteis
+      hasReflections: !!(debriefing.proudOf || debriefing.notSoGood || debriefing.improveNext),
+      habitsWithComments: Object.keys(debriefing.habitComments || {}).filter(h => debriefing.habitComments[h])
+    }));
+};
+
+/**
+ * 🆕 Processa dados diários das últimas 12 semanas
+ * @param {Object} historicalWeekData - Objeto com dados por semana
+ * @returns {Object} Dados organizados por semana e otimizados
+ */
+const processHistoricalDailyData = (historicalWeekData) => {
+  if (!historicalWeekData || Object.keys(historicalWeekData).length === 0) {
+    return {};
+  }
+
+  const processedData = {};
+
+  Object.entries(historicalWeekData).forEach(([weekDate, weekData]) => {
+    // Processar dados de cada dia da semana
+    const dailyEntries = {};
+    let weekSummary = {
+      totalDaysWithData: 0,
+      totalObservations: 0,
+      averageWeight: null,
+      habitCounts: {
+        meditar: 0, medicar: 0, exercitar: 0, comunicar: 0,
+        alimentar: 0, estudar: 0, descansar: 0
+      }
+    };
+
+    Object.entries(weekData).forEach(([date, dayData]) => {
+      if (dayData.hasData) {
+        weekSummary.totalDaysWithData++;
+        
+        // Contar observações
+        if (dayData.obs && dayData.obs.trim()) {
+          weekSummary.totalObservations++;
+        }
+
+        // Calcular peso médio
+        if (dayData.peso) {
+          weekSummary.averageWeight = weekSummary.averageWeight 
+            ? (weekSummary.averageWeight + dayData.peso) / 2 
+            : dayData.peso;
+        }
+
+        // Contar hábitos
+        Object.keys(weekSummary.habitCounts).forEach(habit => {
+          if (dayData[habit]) weekSummary.habitCounts[habit]++;
+        });
+
+        // Armazenar dados do dia (só se tiver observações ou dados importantes)
+        if (dayData.obs || dayData.sentimento || dayData.peso) {
+          dailyEntries[date] = {
+            hasObservation: !!(dayData.obs && dayData.obs.trim()),
+            observation: dayData.obs || '',
+            sentiment: dayData.sentimento || null,
+            weight: dayData.peso || null,
+            dayOfWeek: dayData.dayInfo?.dayName || null
+          };
+        }
+      }
+    });
+
+    // Só incluir semana se tiver dados relevantes
+    if (weekSummary.totalDaysWithData > 0) {
+      processedData[weekDate] = {
+        weekDate,
+        weekFormatted: new Date(weekDate).toLocaleDateString('pt-BR'),
+        summary: weekSummary,
+        dailyEntries: dailyEntries,
+        // Meta-informações
+        hasObservations: weekSummary.totalObservations > 0,
+        completionRate: Math.round((weekSummary.totalDaysWithData / 7) * 100)
+      };
+    }
+  });
+
+  return processedData;
 };
 
 /**
