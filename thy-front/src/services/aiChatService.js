@@ -417,6 +417,15 @@ export const chatWithAI = async (debriefingData, userMessage) => {
     console.log('🌐 [URL CHECK] Full URL:', fullUrl);
     console.log('🌐 [URL CHECK] ENV VITE_N8N_URL:', import.meta.env.VITE_N8N_URL);
     
+    // 🔍 Debug: Verificar estrutura e tamanho dos dados
+    console.log('📊 [DEBUG] Estrutura dos dados enviados:', {
+      hasDebriefingHistory: !!debriefingData.debriefingHistory,
+      debriefingHistoryCount: debriefingData.debriefingHistory?.length || 0,
+      hasHistoricalDailyData: !!debriefingData.historicalDailyData,
+      historicalDailyDataWeeks: Object.keys(debriefingData.historicalDailyData || {}).length,
+      payloadSizeKB: Math.round(JSON.stringify({debriefingData, userMessage}).length / 1024)
+    });
+    
     const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
