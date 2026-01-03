@@ -10,20 +10,24 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  // 🔧 CORREÇÃO: Função melhorada para converter semana
+  // 🔧 CORREÇÃO: Função melhorada para converter semana com lógica de ano
   const convertSemanaToSaturday = (semanaStr) => {
     try {
       // semanaStr vem como "16/06" (DD/MM)
       const [day, month] = semanaStr.split('/');
       
-      // 🔧 CORREÇÃO: Determinar ano correto baseado no mês
+      // 🔧 CORREÇÃO: Determinar ano correto baseado no mês atual
       const currentDate = new Date();
       let year = currentDate.getFullYear(); // ano atual
-      const currentMonth = currentDate.getMonth() + 1; // 1-12 (dezembro = 12)
+      const currentMonth = currentDate.getMonth() + 1; // 1-12 (janeiro = 1)
       
-      // Se o mês é dezembro e já estamos em janeiro do ano seguinte
-      if (parseInt(month) === 12 && currentMonth === 1) {
-        year = year - 1; // dezembro é do ano anterior se já estamos em janeiro
+      // LÓGICA CORRIGIDA: Se o mês é dezembro e estamos em janeiro/fevereiro, é do ano anterior
+      if (parseInt(month) === 12 && currentMonth <= 2) {
+        year = year - 1;
+      }
+      // Se o mês é janeiro e estamos em dezembro, é do próximo ano
+      else if (parseInt(month) === 1 && currentMonth === 12) {
+        year = year + 1;
       }
       
       // Criar data com ano correto
@@ -53,19 +57,31 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
       // Combinar e criar lista de semanas disponíveis
       const weekOptions = [];
       
-      // Adicionar semanas com dados de hábitos
-      weeksWithData.forEach(week => {
+      // 🔧 CORREÇÃO: Filtrar apenas semanas recentes e válidas
+      const currentDate = new Date();
+      const threeMonthsAgo = new Date(currentDate);
+      threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
+      
+      // Adicionar semanas com dados de hábitos (apenas últimas 12 semanas)
+      const recentWeeks = weeksWithData.slice(-12); // Últimas 12 semanas apenas
+      
+      recentWeeks.forEach(week => {
         const weekSaturday = convertSemanaToSaturday(week.semana);
         if (weekSaturday) {
-          const existingDebriefing = existingDebriefings.find(d => d.weekDate === weekSaturday);
-          weekOptions.push({
-            weekDate: weekSaturday,
-            displayName: week.semana,
-            hasData: true,
-            hasDebriefing: !!existingDebriefing,
-            debriefingStatus: existingDebriefing?.status || null,
-            rawDate: new Date(weekSaturday) // 🆕 Para ordenação correta
-          });
+          const weekDate = new Date(weekSaturday);
+          
+          // 🔧 Filtrar apenas semanas dos últimos 3 meses
+          if (weekDate >= threeMonthsAgo) {
+            const existingDebriefing = existingDebriefings.find(d => d.weekDate === weekSaturday);
+            weekOptions.push({
+              weekDate: weekSaturday,
+              displayName: week.semana,
+              hasData: true,
+              hasDebriefing: !!existingDebriefing,
+              debriefingStatus: existingDebriefing?.status || null,
+              rawDate: weekDate
+            });
+          }
         }
       });
       
@@ -84,14 +100,22 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
         });
       }
       
-      // 🔧 CORREÇÃO: Ordenar por data raw (mais recentes primeiro)
-      weekOptions.sort((a, b) => b.rawDate - a.rawDate);
+      // 🔧 CORREÇÃO: Remover duplicatas e ordenar por data (mais recentes primeiro)
+      const uniqueWeeks = weekOptions.reduce((acc, week) => {
+        const exists = acc.find(w => w.weekDate === week.weekDate);
+        if (!exists) {
+          acc.push(week);
+        }
+        return acc;
+      }, []);
+      
+      uniqueWeeks.sort((a, b) => b.rawDate - a.rawDate);
       
       // 🆕 Log para debug
-      console.log('📅 [WeekSelector] Semanas ordenadas:', weekOptions.map(w => `${w.displayName} (${w.weekDate})`));
+      console.log('📅 [WeekSelector] Semanas processadas:', uniqueWeeks.map(w => `${w.displayName} (${w.weekDate})`));
       
-      setAvailableWeeks(weekOptions);
-      console.log('📅 [WeekSelector] Semanas carregadas:', weekOptions.length);
+      setAvailableWeeks(uniqueWeeks);
+      console.log('📅 [WeekSelector] Semanas carregadas:', uniqueWeeks.length);
       
     } catch (error) {
       console.error('❌ [WeekSelector] Erro ao carregar semanas:', error);

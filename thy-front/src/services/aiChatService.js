@@ -136,15 +136,24 @@ const getEvolutionData = (dashboardData, currentWeekDate) => {
 
 /**
  * Converte formato de semana DD/MM para sábado YYYY-MM-DD
+ * 🔧 CORRIGIDA para sincronizar com outros componentes
  */
 const convertSemanaToSaturday = (semanaStr) => {
   try {
     const [day, month] = semanaStr.split('/');
-    let year = new Date().getFullYear();
     
-    // Se é dezembro e estamos em janeiro+, é do ano anterior
-    if (parseInt(month) === 12 && new Date().getMonth() >= 0) {
+    // 🔧 CORREÇÃO: Usar mesma lógica dos outros componentes
+    const currentDate = new Date();
+    let year = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12 (janeiro = 1)
+    
+    // LÓGICA CORRIGIDA: Se o mês é dezembro e estamos em janeiro/fevereiro, é do ano anterior
+    if (parseInt(month) === 12 && currentMonth <= 2) {
       year = year - 1;
+    }
+    // Se o mês é janeiro e estamos em dezembro, é do próximo ano
+    else if (parseInt(month) === 1 && currentMonth === 12) {
+      year = year + 1;
     }
     
     const date = new Date(year, parseInt(month) - 1, parseInt(day));

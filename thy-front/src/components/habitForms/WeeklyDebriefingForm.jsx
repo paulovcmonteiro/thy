@@ -139,22 +139,16 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     }
   };
 
-  // 🆕 FUNÇÃO: Determinar semana default baseada no dia da semana
+  // 🆕 FUNÇÃO: Determinar semana default (sempre a última semana disponível)
   const getDefaultWeek = () => {
+    // 🔧 CORREÇÃO: Usar sempre a semana anterior para evitar bugs
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=domingo, 1=segunda, ..., 6=sábado
+    const lastWeek = new Date(today);
+    lastWeek.setDate(today.getDate() - 7); // 7 dias atrás
+    const lastWeekSaturday = getWeekSaturday(lastWeek);
     
-    if (dayOfWeek === 6) {
-      // É sábado -> usar semana atual
-      const currentWeekSaturday = getWeekSaturday(today);
-      return currentWeekSaturday;
-    } else {
-      // Não é sábado -> usar semana anterior
-      const lastWeek = new Date(today);
-      lastWeek.setDate(today.getDate() - 7); // 7 dias atrás
-      const lastWeekSaturday = getWeekSaturday(lastWeek);
-      return lastWeekSaturday;
-    }
+    console.log('📅 [DefaultWeek] Semana padrão selecionada:', lastWeekSaturday);
+    return lastWeekSaturday;
   };
 
   // Função para obter dados das últimas 4 semanas vs atual
@@ -205,19 +199,23 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     return { completudeData, weightData, currentWeek, last4Weeks };
   };
 
-  // 🔧 CORREÇÃO: Função melhorada para converter semana
+  // 🔧 CORREÇÃO: Função melhorada para converter semana (sincronizada)
   const convertSemanaToSaturday = (semanaStr) => {
     try {
       const [day, month] = semanaStr.split('/');
       
-      // 🔧 CORREÇÃO: Usar mesma lógica do DebriefingWeekSelector
+      // 🔧 CORREÇÃO: Usar EXATA mesma lógica do DebriefingWeekSelector
       const currentDate = new Date();
-      let year = currentDate.getFullYear(); // ano atual
-      const currentMonth = currentDate.getMonth() + 1; // 1-12 (dezembro = 12)
+      let year = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1; // 1-12 (janeiro = 1)
       
-      // Se o mês é dezembro e já estamos em janeiro do ano seguinte
-      if (parseInt(month) === 12 && currentMonth === 1) {
-        year = year - 1; // dezembro é do ano anterior se já estamos em janeiro
+      // LÓGICA CORRIGIDA: Se o mês é dezembro e estamos em janeiro/fevereiro, é do ano anterior
+      if (parseInt(month) === 12 && currentMonth <= 2) {
+        year = year - 1;
+      }
+      // Se o mês é janeiro e estamos em dezembro, é do próximo ano
+      else if (parseInt(month) === 1 && currentMonth === 12) {
+        year = year + 1;
       }
       
       const date = new Date(year, parseInt(month) - 1, parseInt(day));
@@ -586,7 +584,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={weightData}>
                           <XAxis dataKey="semana" fontSize={12} />
-                          <YAxis domain={[75, 85]} fontSize={12} />
+                          <YAxis domain={['dataMin - 2', 'dataMax + 2']} fontSize={12} />
                           <Tooltip formatter={(value) => [`${value}kg`, 'Peso']} />
                           <Line 
                             type="monotone" 

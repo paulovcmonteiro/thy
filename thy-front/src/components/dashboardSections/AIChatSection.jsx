@@ -243,17 +243,21 @@ O que você gostaria de saber ou discutir sobre essa semana?`,
     return historicalData;
   };
 
-  // Função utilitária para converter semana DD/MM -> YYYY-MM-DD
+  // 🔧 Função utilitária para converter semana DD/MM -> YYYY-MM-DD (SINCRONIZADA)
   const convertSemanaToSaturday = (semanaStr) => {
     try {
       const [day, month] = semanaStr.split('/');
       const currentDate = new Date();
       let year = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth() + 1;
+      const currentMonth = currentDate.getMonth() + 1; // 1-12 (janeiro = 1)
       
-      // Se o mês é dezembro e já estamos em janeiro do ano seguinte
-      if (parseInt(month) === 12 && currentMonth === 1) {
+      // 🔧 LÓGICA CORRIGIDA: Se o mês é dezembro e estamos em janeiro/fevereiro, é do ano anterior
+      if (parseInt(month) === 12 && currentMonth <= 2) {
         year = year - 1;
+      }
+      // Se o mês é janeiro e estamos em dezembro, é do próximo ano
+      else if (parseInt(month) === 1 && currentMonth === 12) {
+        year = year + 1;
       }
       
       const date = new Date(year, parseInt(month) - 1, parseInt(day));
