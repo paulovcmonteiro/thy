@@ -125,11 +125,17 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
     }
   };
 
-  // Formatar data do sábado para exibição
+  // 🔧 CORRIGIDO: Formatar semana para mostrar DOMINGO (início) ao invés do sábado
   const formatWeekForDisplay = (saturdayDate) => {
     try {
-      const date = new Date(saturdayDate + 'T00:00:00');
-      return date.toLocaleDateString('pt-BR', {
+      // saturdayDate é a data do sábado, mas queremos mostrar o domingo
+      const saturday = new Date(saturdayDate + 'T00:00:00');
+      
+      // 🔧 Calcular o domingo (início da semana)
+      const sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() - 6); // 6 dias antes do sábado = domingo
+      
+      return sunday.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit'
       });
