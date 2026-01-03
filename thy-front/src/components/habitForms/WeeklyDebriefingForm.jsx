@@ -54,7 +54,7 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     { key: 'descansar', label: '😴 Descansar', description: 'Descanso adequado' }
   ];
 
-  // Função para calcular datas da semana (copiada do WeeklyDebriefingSection)
+  // 🔧 PADRONIZADO: Calcular datas da semana (SEMPRE domingo a sábado)
   const getWeekDates = (weekDate) => {
     if (!weekDate) return [];
     
@@ -63,17 +63,16 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       const inputDate = new Date(weekDate + 'T00:00:00');
       const dayOfWeek = inputDate.getDay(); // 0=domingo, 1=segunda, etc.
       
-      // Calcular quantos dias voltar para chegar no domingo
+      // 🔧 PADRONIZADO: Sempre calcular a partir do domingo
       const daysToSunday = dayOfWeek; // Se é terça (2), volta 2 dias
       
       // Encontrar o domingo da semana
       const sunday = new Date(inputDate);
       sunday.setDate(inputDate.getDate() - daysToSunday);
       
-      
       const weekDates = [];
       
-      // Gerar os 7 dias da semana (domingo a sábado)
+      // 🔧 PADRONIZADO: Gerar os 7 dias da semana (SEMPRE domingo a sábado)
       for (let i = 0; i < 7; i++) {
         const date = new Date(sunday);
         date.setDate(sunday.getDate() + i);

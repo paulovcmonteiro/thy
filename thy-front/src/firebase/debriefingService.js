@@ -309,6 +309,8 @@ import {
    * Utilitário: Converte uma data para o sábado da semana
    * @param {Date|string} date - Data de referência
    * @returns {string} Data do sábado no formato YYYY-MM-DD
+   * 
+   * 📝 NOTA: Mantém sábado para compatibilidade com debriefings salvos
    */
   export const getWeekSaturday = (date = new Date()) => {
     const targetDate = new Date(date);
@@ -319,6 +321,21 @@ import {
     
     // Adicionar os dias necessários
     targetDate.setDate(targetDate.getDate() + daysUntilSaturday);
+    
+    return targetDate.toISOString().split('T')[0];
+  };
+  
+  /**
+   * 🆕 NOVO: Converte uma data para o domingo da semana (padronização)
+   * @param {Date|string} date - Data de referência
+   * @returns {string} Data do domingo no formato YYYY-MM-DD
+   */
+  export const getWeekSunday = (date = new Date()) => {
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getDay(); // 0 = domingo, 6 = sábado
+    
+    // Voltar para o domingo da semana
+    targetDate.setDate(targetDate.getDate() - dayOfWeek);
     
     return targetDate.toISOString().split('T')[0];
   };
@@ -414,6 +431,7 @@ import {
     completeDebriefing,
     saveAIInsights,
     getWeekSaturday,
+    getWeekSunday, // 🆕 NOVO
     isTodaySaturday,
     formatWeekDate
   };

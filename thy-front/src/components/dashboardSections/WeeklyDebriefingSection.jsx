@@ -34,7 +34,7 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
     }
   };
 
-  // Função para calcular datas da semana anterior (7 dias completos)
+  // 🔧 PADRONIZADO: Calcular datas da semana (SEMPRE domingo a sábado)
   const getPreviousWeekDates = (weekDate) => {
     if (!weekDate) return [];
     
@@ -43,17 +43,16 @@ const WeeklyDebriefingSection = ({ data, isExpanded, onToggle }) => {
       const inputDate = new Date(weekDate + 'T00:00:00');
       const dayOfWeek = inputDate.getDay(); // 0=domingo, 1=segunda, etc.
       
-      // Calcular quantos dias voltar para chegar no domingo
+      // 🔧 PADRONIZADO: Calcular quantos dias voltar para chegar no domingo
       const daysToSunday = dayOfWeek; // Se é terça (2), volta 2 dias
       
       // Encontrar o domingo da semana
       const sunday = new Date(inputDate);
       sunday.setDate(inputDate.getDate() - daysToSunday);
       
-      
       const weekDates = [];
       
-      // Gerar os 7 dias da semana (domingo a sábado)
+      // 🔧 PADRONIZADO: Gerar os 7 dias da semana (domingo a sábado)
       for (let i = 0; i < 7; i++) {
         const date = new Date(sunday);
         date.setDate(sunday.getDate() + i);

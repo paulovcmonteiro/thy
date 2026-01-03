@@ -29,10 +29,13 @@ const WeekTable = ({
     'produtivo': '😊'
   };
 
-  // Ordenar dias por data
+  // 🔧 PADRONIZADO: Ordenar dias por data (domingo primeiro)
   const allDays = Object.values(weekData)
     .filter(day => day && day.dayInfo) // Garantir que temos dados válidos
-    .sort((a, b) => a.dayInfo.date.localeCompare(b.dayInfo.date));
+    .sort((a, b) => {
+      // Ordenar por data para garantir ordem cronológica (domingo primeiro)
+      return a.dayInfo.date.localeCompare(b.dayInfo.date);
+    });
 
   // Estado de loading
   if (loading) {

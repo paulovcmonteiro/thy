@@ -168,20 +168,22 @@ O que você gostaria de saber ou discutir sobre essa semana?`,
     return weekData;
   };
 
-  // Calcular datas da semana (copiado do WeeklyDebriefingSection)
+  // 🔧 PADRONIZADO: Calcular datas da semana (SEMPRE domingo a sábado)
   const getWeekDates = (weekDate) => {
     if (!weekDate) return [];
     
     try {
       const inputDate = new Date(weekDate + 'T00:00:00');
-      const dayOfWeek = inputDate.getDay();
+      const dayOfWeek = inputDate.getDay(); // 0=domingo, 1=segunda, etc.
       const daysToSunday = dayOfWeek;
       
+      // 🔧 PADRONIZADO: Encontrar o domingo da semana
       const sunday = new Date(inputDate);
       sunday.setDate(inputDate.getDate() - daysToSunday);
       
       const weekDates = [];
       
+      // 🔧 PADRONIZADO: Gerar 7 dias (domingo a sábado)
       for (let i = 0; i < 7; i++) {
         const date = new Date(sunday);
         date.setDate(sunday.getDate() + i);

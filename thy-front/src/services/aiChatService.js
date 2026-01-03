@@ -80,12 +80,16 @@ export const collectDebriefingData = (lastDebriefing, previousWeekData, dashboar
 };
 
 /**
- * Calcula início da semana (domingo) baseado no sábado
+ * 🔧 PADRONIZADO: Calcula início da semana (SEMPRE domingo)
  */
 const calculateWeekStart = (weekDate) => {
-  const saturday = new Date(weekDate + 'T00:00:00');
-  const sunday = new Date(saturday);
-  sunday.setDate(saturday.getDate() - 6); // 6 dias antes do sábado
+  const inputDate = new Date(weekDate + 'T00:00:00');
+  const dayOfWeek = inputDate.getDay(); // 0=domingo, 1=segunda, ..., 6=sábado
+  
+  // Encontrar o domingo da semana
+  const sunday = new Date(inputDate);
+  sunday.setDate(inputDate.getDate() - dayOfWeek);
+  
   return sunday.toISOString().split('T')[0];
 };
 

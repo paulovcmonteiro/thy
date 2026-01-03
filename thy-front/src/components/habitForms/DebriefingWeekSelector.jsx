@@ -10,7 +10,8 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  // 🔧 CORREÇÃO: Função melhorada para converter semana com lógica de ano
+  // 🔧 PADRONIZADO: Converte semana DD/MM para sábado (compatibilidade)
+  // 📝 NOTA: Debriefings são salvos com data do sábado, mas EXIBIDOS com início no domingo
   const convertSemanaToSaturday = (semanaStr) => {
     try {
       // semanaStr vem como "16/06" (DD/MM)
@@ -35,7 +36,7 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
       
       console.log(`🔧 [WeekSelector] Convertendo ${semanaStr} -> ${date.toISOString().split('T')[0]} (ano ${year})`);
       
-      // Encontrar o sábado dessa semana
+      // 📝 Retorna sábado para compatibilidade com debriefings salvos
       return getWeekSaturday(date);
     } catch (error) {
       console.warn('⚠️ [WeekSelector] Erro ao converter semana:', semanaStr, error);
