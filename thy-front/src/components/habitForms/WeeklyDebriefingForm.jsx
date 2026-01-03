@@ -185,15 +185,29 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       isCurrentWeek: index === comparisonWeeks.length - 1
     }));
 
-    // Dados de peso correspondentes
+    // 🔍 DEBUG: Dados de peso correspondentes
     const weightData = comparisonWeeks.map((week, index) => {
       const weightWeek = allWeights.find(w => w.semana === week.semana);
+      
+      // 🔍 DEBUG: Log para investigar peso incorreto
+      const isCurrentWeek = index === comparisonWeeks.length - 1;
+      if (isCurrentWeek || weightWeek?.peso) {
+        console.log(`⚖️ [DEBUG peso] Semana ${week.semana}:`, {
+          weightWeek,
+          peso: weightWeek?.peso,
+          isCurrentWeek,
+          selectedWeek
+        });
+      }
+      
       return {
         semana: week.semana,
         peso: weightWeek?.peso || null,
-        isCurrentWeek: index === comparisonWeeks.length - 1
+        isCurrentWeek
       };
     }).filter(w => w.peso !== null);
+    
+    console.log('⚖️ [DEBUG peso] weightData final:', weightData);
 
     return { completudeData, weightData, currentWeek, last4Weeks };
   };
@@ -224,19 +238,34 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     }
   };
 
-  // Obter dados de hábito específico para análise
+  // 🔍 DEBUG: Obter dados de hábito específico para análise
   const getHabitData = (habitKey) => {
     if (!data || !selectedWeek) return { current: 0, average: 0, classification: null };
 
     const habitData = data.habitDataByType[habitKey]?.data || [];
     
+    // 🔍 DEBUG: Log para investigar dados incorretos
+    if (habitKey === 'alimentar') {
+      console.log('🥗 [DEBUG alimentar] selectedWeek:', selectedWeek);
+      console.log('🥗 [DEBUG alimentar] habitData:', habitData);
+    }
+    
     // Encontrar dados da semana selecionada
     const selectedWeekData = habitData.find(week => {
       const weekSaturday = convertSemanaToSaturday(week.semana);
+      if (habitKey === 'alimentar') {
+        console.log(`🥗 [DEBUG alimentar] Comparando ${week.semana} -> ${weekSaturday} com ${selectedWeek}`);
+      }
       return weekSaturday === selectedWeek;
     });
 
     const currentValue = selectedWeekData?.valor || 0;
+    
+    // 🔍 DEBUG: Log do resultado
+    if (habitKey === 'alimentar') {
+      console.log('🥗 [DEBUG alimentar] selectedWeekData:', selectedWeekData);
+      console.log('🥗 [DEBUG alimentar] currentValue:', currentValue);
+    }
 
     // Calcular média das últimas 4 semanas
     const selectedIndex = habitData.findIndex(week => {
