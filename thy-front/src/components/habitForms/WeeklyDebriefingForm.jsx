@@ -150,6 +150,21 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
     return lastWeekSaturday;
   };
 
+  // 🆕 CORREÇÃO: Converter weekStart (domingo) para sábado usando data ISO
+  const convertWeekStartToSaturday = (weekStartISO) => {
+    try {
+      // weekStartISO é o domingo da semana (ex: "2026-01-12")
+      // Sábado é 6 dias depois
+      const sunday = new Date(weekStartISO + 'T00:00:00');
+      const saturday = new Date(sunday);
+      saturday.setDate(sunday.getDate() + 6);
+      return saturday.toISOString().split('T')[0];
+    } catch (error) {
+      console.error('Erro ao converter weekStart para sábado:', error);
+      return null;
+    }
+  };
+
   // Função para obter dados das últimas 4 semanas vs atual
   const getWeekComparison = () => {
     if (!data || !selectedWeek) {
@@ -158,10 +173,22 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
 
     const allWeeks = data.weeklyCompletionData;
     const allWeights = data.weightData;
-    
-    // Encontrar índice da semana selecionada
+
+    console.log('🔍 [DEBUG] selectedWeek:', selectedWeek);
+    console.log('🔍 [DEBUG] allWeeks sample:', allWeeks.slice(-5).map(w => ({ id: w.id, semana: w.semana })));
+
+    // 🔧 CORREÇÃO: Usar o ID do documento (weekStart ISO) para comparação precisa
+    // selectedWeek é o sábado (ex: "2026-01-18")
+    // Precisamos encontrar a semana cujo domingo + 6 dias = selectedWeek
     const selectedWeekIndex = allWeeks.findIndex(week => {
-      const weekSaturday = convertSemanaToSaturday(week.semana);
+      // week.id é o weekStartISO (domingo da semana)
+      if (!week.id) {
+        // Fallback para método antigo se não tiver id
+        const weekSaturday = convertSemanaToSaturday(week.semana);
+        return weekSaturday === selectedWeek;
+      }
+      const weekSaturday = convertWeekStartToSaturday(week.id);
+      console.log(`🔍 [DEBUG] Comparando: week.id=${week.id} -> sábado=${weekSaturday} vs selectedWeek=${selectedWeek}`);
       return weekSaturday === selectedWeek;
     });
 
@@ -242,42 +269,50 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
   const getHabitData = (habitKey) => {
     if (!data || !selectedWeek) return { current: 0, average: 0, classification: null };
 
-    const habitData = data.habitDataByType[habitKey]?.data || [];
-    
+    // 🔧 CORREÇÃO: Usar weeklyCompletionData para obter os IDs com ano completo
+    const allWeeks = data.weeklyCompletionData || [];
+    const habitDataByType = data.habitDataByType[habitKey]?.data || [];
+
     // 🔍 DEBUG: Log para investigar dados incorretos
     if (habitKey === 'alimentar') {
       console.log('🥗 [DEBUG alimentar] selectedWeek:', selectedWeek);
-      console.log('🥗 [DEBUG alimentar] habitData:', habitData);
+      console.log('🥗 [DEBUG alimentar] allWeeks sample:', allWeeks.slice(-5).map(w => ({ id: w.id, semana: w.semana })));
     }
-    
-    // Encontrar dados da semana selecionada
-    const selectedWeekData = habitData.find(week => {
-      const weekSaturday = convertSemanaToSaturday(week.semana);
-      if (habitKey === 'alimentar') {
-        console.log(`🥗 [DEBUG alimentar] Comparando ${week.semana} -> ${weekSaturday} com ${selectedWeek}`);
+
+    // 🔧 CORREÇÃO: Encontrar o índice correto usando o ID (weekStartISO) com ano completo
+    const selectedWeekIndex = allWeeks.findIndex(week => {
+      if (!week.id) {
+        const weekSaturday = convertSemanaToSaturday(week.semana);
+        return weekSaturday === selectedWeek;
       }
+      const weekSaturday = convertWeekStartToSaturday(week.id);
       return weekSaturday === selectedWeek;
     });
 
-    const currentValue = selectedWeekData?.valor || 0;
-    
     // 🔍 DEBUG: Log do resultado
     if (habitKey === 'alimentar') {
-      console.log('🥗 [DEBUG alimentar] selectedWeekData:', selectedWeekData);
+      console.log('🥗 [DEBUG alimentar] selectedWeekIndex:', selectedWeekIndex);
+    }
+
+    // Usar o índice encontrado para pegar o habitData correspondente
+    const currentValue = selectedWeekIndex >= 0 && habitDataByType[selectedWeekIndex]
+      ? habitDataByType[selectedWeekIndex].valor
+      : 0;
+
+    if (habitKey === 'alimentar') {
       console.log('🥗 [DEBUG alimentar] currentValue:', currentValue);
     }
 
-    // Calcular média das últimas 4 semanas
-    const selectedIndex = habitData.findIndex(week => {
-      const weekSaturday = convertSemanaToSaturday(week.semana);
-      return weekSaturday === selectedWeek;
-    });
+    // Calcular média das últimas 4 semanas usando índices
+    const selectedIndex = selectedWeekIndex;
 
     let averageValue = 0;
     if (selectedIndex > 0) {
       const startIndex = Math.max(0, selectedIndex - 8);
-      const previousWeeks = habitData.slice(startIndex, selectedIndex);
-      averageValue = previousWeeks.reduce((sum, week) => sum + week.valor, 0) / previousWeeks.length;
+      const previousWeeks = habitDataByType.slice(startIndex, selectedIndex);
+      averageValue = previousWeeks.length > 0
+        ? previousWeeks.reduce((sum, week) => sum + (week?.valor || 0), 0) / previousWeeks.length
+        : 0;
     }
 
     const classification = getHabitClassification(currentValue);

@@ -44,47 +44,58 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
     }
   };
 
-  // 🔧 CORRIGIDO: Carregar APENAS semanas relevantes para debriefing
+  // 🔧 CORRIGIDO: Carregar semanas relevantes para debriefing
   const loadAvailableWeeks = async () => {
     setLoading(true);
     try {
       // Buscar debriefings existentes
       const debriefingsResult = await getAllDebriefings();
       const existingDebriefings = debriefingsResult.success ? debriefingsResult.data : [];
-      
+
       const weekOptions = [];
       const currentDate = new Date();
       const currentSaturday = getWeekSaturday();
-      
+
       console.log('📅 [WeekSelector] Data atual:', currentDate.toISOString().split('T')[0]);
       console.log('📅 [WeekSelector] Sábado atual:', currentSaturday);
-      
-      // 🆕 1. SEMPRE adicionar semana atual (para fazer debriefing)
-      const currentDebriefing = existingDebriefings.find(d => d.weekDate === currentSaturday);
-      weekOptions.push({
-        weekDate: currentSaturday,
-        displayName: formatWeekForDisplay(currentSaturday),
-        hasData: true, // Assumir que tem dados para debriefing
-        hasDebriefing: !!currentDebriefing,
-        debriefingStatus: currentDebriefing?.status || null,
-        rawDate: new Date(currentSaturday),
-        isCurrent: true // 🆕 Marcar como semana atual
-      });
-      
-      // 🆕 2. Adicionar APENAS semanas com debriefings FINALIZADOS
+
+      // 🆕 1. Gerar as últimas N semanas (incluindo semana atual)
+      // Isso garante que semanas recentes apareçam mesmo sem debriefing
+      const NUM_RECENT_WEEKS = 8; // Mostrar últimas 8 semanas
+
+      for (let i = 0; i < NUM_RECENT_WEEKS; i++) {
+        const weekDate = new Date(currentDate);
+        weekDate.setDate(currentDate.getDate() - (i * 7));
+        const saturdayDate = getWeekSaturday(weekDate);
+
+        // Verificar se já existe debriefing para esta semana
+        const existingDebriefing = existingDebriefings.find(d => d.weekDate === saturdayDate);
+
+        weekOptions.push({
+          weekDate: saturdayDate,
+          displayName: formatWeekForDisplay(saturdayDate),
+          hasData: true,
+          hasDebriefing: !!existingDebriefing,
+          debriefingStatus: existingDebriefing?.status || null,
+          rawDate: new Date(saturdayDate),
+          isCurrent: i === 0 // Primeira iteração = semana atual
+        });
+      }
+
+      // 🆕 2. Adicionar semanas com debriefings FINALIZADOS que não estão nas recentes
       existingDebriefings
         .filter(debriefing => {
           // Filtrar apenas debriefings finalizados
           if (debriefing.status !== 'completed') return false;
-          
-          // Não incluir a semana atual novamente
-          if (debriefing.weekDate === currentSaturday) return false;
-          
+
+          // Não incluir se já está na lista de semanas recentes
+          if (weekOptions.find(w => w.weekDate === debriefing.weekDate)) return false;
+
           // Filtrar apenas semanas dos últimos 3 meses
           const debriefingDate = new Date(debriefing.weekDate);
           const threeMonthsAgo = new Date(currentDate);
           threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
-          
+
           return debriefingDate >= threeMonthsAgo;
         })
         .forEach(debriefing => {
@@ -98,7 +109,7 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
             isCurrent: false
           });
         });
-      
+
       // 🔧 3. Remover duplicatas e ordenar (mais recentes primeiro)
       const uniqueWeeks = weekOptions.reduce((acc, week) => {
         const exists = acc.find(w => w.weekDate === week.weekDate);
@@ -107,17 +118,17 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
         }
         return acc;
       }, []);
-      
+
       uniqueWeeks.sort((a, b) => b.rawDate - a.rawDate);
-      
+
       // 🆕 4. Log para debug
-      console.log('📅 [WeekSelector] Semanas finais:', uniqueWeeks.map(w => 
-        `${w.displayName} (${w.weekDate}) - ${w.isCurrent ? 'ATUAL' : w.debriefingStatus}`
+      console.log('📅 [WeekSelector] Semanas finais:', uniqueWeeks.map(w =>
+        `${w.displayName} (${w.weekDate}) - ${w.isCurrent ? 'ATUAL' : w.debriefingStatus || 'pendente'}`
       ));
-      
+
       setAvailableWeeks(uniqueWeeks);
       console.log('📅 [WeekSelector] Total semanas:', uniqueWeeks.length);
-      
+
     } catch (error) {
       console.error('❌ [WeekSelector] Erro ao carregar semanas:', error);
     } finally {
@@ -185,13 +196,19 @@ const DebriefingWeekSelector = ({ selectedWeek, onWeekChange, className = '' }) 
         </div>
         
         <div className="flex items-center gap-2">
-          {week.hasDebriefing && !isCurrent && (
+          {!isCurrent && (
             <span className={`text-xs px-2 py-1 rounded ${
-              week.debriefingStatus === 'completed' 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-yellow-100 text-yellow-700'
+              week.debriefingStatus === 'completed'
+                ? 'bg-green-100 text-green-700'
+                : week.debriefingStatus === 'in_progress'
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'bg-gray-100 text-gray-500'
             }`}>
-              {week.debriefingStatus === 'completed' ? 'Finalizado' : 'Em progresso'}
+              {week.debriefingStatus === 'completed'
+                ? 'Finalizado'
+                : week.debriefingStatus === 'in_progress'
+                  ? 'Em progresso'
+                  : 'Pendente'}
             </span>
           )}
         </div>
