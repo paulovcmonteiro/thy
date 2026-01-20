@@ -177,19 +177,21 @@ const processFirestoreData = (weeks) => {
   }
 
   try {
-    // 1. Weekly Completion Data (IGUAL ao formato anterior)
+    // 1. Weekly Completion Data (COM ID para comparação precisa entre anos)
     const weeklyCompletionData = weeks.map(week => ({
-      semana: week.semana,           // "16/06" (formato compatível)
-      completude: week.completude || 0  // 85 (calculado com regras novas)
+      id: week.id,                     // "2026-01-12" (weekStartISO com ano)
+      semana: week.semana,             // "12/01" (formato DD/MM para exibição)
+      completude: week.completude || 0
     }));
     console.log('✅ [processFirestoreData] Completude processada:', weeklyCompletionData.length, 'entradas');
 
-    // 2. Weight Data (IGUAL ao formato anterior)
+    // 2. Weight Data (COM ID para comparação precisa entre anos)
     const weightData = weeks
       .filter(week => week.peso && week.peso > 0)
       .map(week => ({
-        semana: week.semana,          // "16/06"
-        peso: week.peso               // 82.1 (agora é média semanal)
+        id: week.id,                   // "2026-01-12" (weekStartISO com ano)
+        semana: week.semana,           // "12/01"
+        peso: week.peso
       }));
     console.log('✅ [processFirestoreData] Peso processado:', weightData.length, 'entradas');
 
@@ -212,10 +214,11 @@ const processFirestoreData = (weeks) => {
         const count = week[habit] || 0;              // Ex: 5 dias
         const maxValue = habitMaxValues[habit];      // Ex: 7 dias máximo
         const percentage = maxValue > 0 ? Math.round((count / maxValue) * 100) : 0; // Ex: 71%
-        
+
         return {
-          semana: week.semana,
-          valor: percentage  // Dashboard espera % para os gráficos
+          id: week.id,         // "2026-01-12" (weekStartISO com ano)
+          semana: week.semana, // "12/01" (formato DD/MM para exibição)
+          valor: percentage    // Dashboard espera % para os gráficos
         };
       });
       

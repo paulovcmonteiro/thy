@@ -212,21 +212,18 @@ const WeeklyDebriefingForm = ({ isOpen, onClose }) => {
       isCurrentWeek: index === comparisonWeeks.length - 1
     }));
 
-    // 🔍 DEBUG: Dados de peso correspondentes
+    // 🔧 CORREÇÃO: Dados de peso usando ID para comparação precisa entre anos
     const weightData = comparisonWeeks.map((week, index) => {
-      const weightWeek = allWeights.find(w => w.semana === week.semana);
-      
-      // 🔍 DEBUG: Log para investigar peso incorreto
+      // Usar ID (weekStartISO com ano) para encontrar peso correto
+      const weightWeek = allWeights.find(w => w.id === week.id);
+
       const isCurrentWeek = index === comparisonWeeks.length - 1;
-      if (isCurrentWeek || weightWeek?.peso) {
-        console.log(`⚖️ [DEBUG peso] Semana ${week.semana}:`, {
-          weightWeek,
-          peso: weightWeek?.peso,
-          isCurrentWeek,
-          selectedWeek
-        });
-      }
-      
+      console.log(`⚖️ [DEBUG peso] Semana ${week.semana} (${week.id}):`, {
+        weightWeek,
+        peso: weightWeek?.peso,
+        isCurrentWeek
+      });
+
       return {
         semana: week.semana,
         peso: weightWeek?.peso || null,
