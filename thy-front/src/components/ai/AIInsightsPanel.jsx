@@ -1,6 +1,7 @@
 // src/components/ai/AIInsightsPanel.jsx - Painel de insights da IA
 import React, { useState, useEffect } from 'react';
 import { Brain, Sparkles, Loader2, AlertCircle, Clock } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { generateDebriefingInsights } from '../../services/aiService';
 import { saveAIInsights } from '../../firebase/debriefingService';
 
@@ -47,122 +48,61 @@ const AIInsightsPanel = ({
     }
   };
 
-  // Função para limpar formatação Markdown (remover asteriscos)
-  const cleanMarkdownText = (text) => {
-    return text.replace(/\*\*/g, ''); // Remove todos os **
-  };
-
-  // Função para formatar texto em tópicos legíveis
-  const formatTextIntoTopics = (text, sectionTitle) => {
-    // Seções que devem ser formatadas em tópicos
-    const sectionsToFormat = ['Parabéns', 'Motivação'];
-    const shouldFormat = sectionsToFormat.some(section => sectionTitle.includes(section));
-    
-    if (!shouldFormat) return text;
-    
-    // Quebrar texto por frases (pontos finais, exclamações)
-    const sentences = text.split(/[.!]\s+/).filter(sentence => sentence.trim().length > 0);
-    
-    // Se há múltiplas frases, transformar em lista
-    if (sentences.length > 1) {
-      return sentences.map(sentence => `- ${sentence.trim()}${sentence.includes('.') || sentence.includes('!') ? '' : '.'}`).join('\n');
-    }
-    
-    return text;
-  };
-
-  // Função para renderizar insights estruturados
-  const renderStructuredInsights = (text) => {
-    // Limpar asteriscos do texto completo antes de processar
-    const cleanText = cleanMarkdownText(text);
-    const sections = cleanText.split('##').filter(section => section.trim());
-    
-    return sections.map((section, index) => {
-      const lines = section.trim().split('\n');
-      const title = lines[0].trim();
-      const rawContent = lines.slice(1).join('\n').trim();
-      
-      // Aplicar formatação em tópicos para seções específicas
-      const content = formatTextIntoTopics(rawContent, title);
-      
-      // Extrair ícone da seção do próprio título (se houver)
-      const getIcon = (title) => {
-        // Extrair primeiro emoji do título, se houver
-        const emojiMatch = title.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u);
-        if (emojiMatch) return emojiMatch[0];
-        
-        // Fallback para casos sem emoji
-        if (title.includes('Parabéns')) return '🎉';
-        if (title.includes('Insights')) return '🔍';
-        if (title.includes('Comparação')) return '📊';
-        if (title.includes('Sugestões')) return '💡';
-        if (title.includes('Motivação')) return '🚀';
-        return '📋';
-      };
-
-      // Identificar cor da seção
-      const getColors = (title) => {
-        if (title.includes('🎉') || title.includes('Parabéns')) 
-          return { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-200' };
-        if (title.includes('🔍') || title.includes('Insights')) 
-          return { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' };
-        if (title.includes('📊') || title.includes('Comparação')) 
-          return { bg: 'bg-orange-50', text: 'text-orange-800', border: 'border-orange-200' };
-        if (title.includes('💡') || title.includes('Sugestões')) 
-          return { bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-200' };
-        if (title.includes('🚀') || title.includes('Motivação')) 
-          return { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' };
-        return { bg: 'bg-gray-50', text: 'text-gray-800', border: 'border-gray-200' };
-      };
-
-      const colors = getColors(title);
-      
-      return (
-        <div key={index} className={`${colors.bg} ${colors.border} border rounded-lg p-4`}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">{getIcon(title)}</span>
-            <h3 className={`font-semibold ${colors.text}`}>
-              {title.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()}
-            </h3>
-          </div>
-          
-          <div className={`${colors.text} space-y-2`}>
-            {content.split('\n').map((line, lineIndex) => {
-              const trimmedLine = line.trim();
-              if (!trimmedLine) return null;
-              
-              // Renderizar lista com bullets
-              if (trimmedLine.startsWith('- ')) {
-                const bulletContent = trimmedLine.substring(2);
-                
-                // Destacar fontes de dados entre parênteses, preservando emojis
-                const highlightedContent = bulletContent.replace(
-                  /\*(.*?)\*/g, 
-                  '<span class="text-xs bg-white/60 px-2 py-1 rounded font-medium">$1</span>'
-                );
-                
-                return (
-                  <div key={lineIndex} className="flex items-start gap-2">
-                    <span className="text-xs mt-1.5 opacity-60">•</span>
-                    <div 
-                      className="flex-1 text-sm"
-                      dangerouslySetInnerHTML={{ __html: highlightedContent }}
-                    />
-                  </div>
-                );
-              }
-              
-              // Renderizar parágrafo normal, preservando emojis
-              return (
-                <p key={lineIndex} className="text-sm">
-                  {trimmedLine}
-                </p>
-              );
-            })}
-          </div>
-        </div>
-      );
-    });
+  // Componentes customizados para ReactMarkdown com estilização
+  const markdownComponents = {
+    // Headers
+    h1: ({ children }) => (
+      <h1 className="text-xl font-bold text-gray-800 mb-3 mt-4 first:mt-0">{children}</h1>
+    ),
+    h2: ({ children }) => (
+      <h2 className="text-lg font-semibold text-purple-800 mb-2 mt-4 first:mt-0 flex items-center gap-2">
+        {children}
+      </h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className="text-base font-semibold text-gray-700 mb-2 mt-3">{children}</h3>
+    ),
+    // Paragraphs
+    p: ({ children }) => (
+      <p className="text-sm text-gray-700 mb-2 leading-relaxed">{children}</p>
+    ),
+    // Bold
+    strong: ({ children }) => (
+      <strong className="font-semibold text-gray-800">{children}</strong>
+    ),
+    // Italic
+    em: ({ children }) => (
+      <em className="italic text-gray-600">{children}</em>
+    ),
+    // Lists
+    ul: ({ children }) => (
+      <ul className="space-y-1.5 mb-3 ml-1">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="space-y-1.5 mb-3 ml-1 list-decimal list-inside">{children}</ol>
+    ),
+    li: ({ children }) => (
+      <li className="text-sm text-gray-700 flex items-start gap-2">
+        <span className="text-purple-500 mt-1">•</span>
+        <span className="flex-1">{children}</span>
+      </li>
+    ),
+    // Horizontal rule (separators)
+    hr: () => (
+      <hr className="my-4 border-t border-purple-200" />
+    ),
+    // Code (inline)
+    code: ({ children }) => (
+      <code className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-xs font-mono">
+        {children}
+      </code>
+    ),
+    // Blockquote
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-4 border-purple-300 pl-3 py-1 my-2 bg-purple-50 rounded-r">
+        {children}
+      </blockquote>
+    ),
   };
 
   const handleGenerateInsights = async () => {
@@ -280,8 +220,10 @@ const AIInsightsPanel = ({
                 </div>
               )}
               
-              <div className="text-gray-700 leading-relaxed space-y-4">
-                {renderStructuredInsights(insights)}
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown components={markdownComponents}>
+                  {insights}
+                </ReactMarkdown>
               </div>
             </div>
             
