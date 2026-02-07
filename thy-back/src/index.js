@@ -17,7 +17,7 @@ async function testarClaude() {
         console.log("🤖 Testando conexão com Claude...");
         
         const resposta = await anthropic.messages.create({
-            model: "claude-3-5-haiku-20241022",
+            model: "claude-opus-4-6",
             max_tokens: 100,
             messages: [
                 { role: "user", content: "Olá! Como você está? Responda em português." }
@@ -57,8 +57,8 @@ app.post('/api/claude', async (req, res) => {
         
         // 3. Enviar para Claude
         const resposta = await anthropic.messages.create({
-            model: "claude-3-5-haiku-20241022",
-            max_tokens: 2000,
+            model: "claude-opus-4-6",
+            max_tokens: 4000,
             messages: [
                 { role: "user", content: prompt }
             ]
