@@ -11,3 +11,6 @@ npm-debug.log*
 # Cache do sistema
 .DS_Store
 .vercel
+
+# Credenciais Firebase Admin
+service-account.json
