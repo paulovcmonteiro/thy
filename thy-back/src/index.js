@@ -249,6 +249,172 @@ app.post('/api/openclaw/habits', async (req, res) => {
     }
 });
 
+// ── Helper compartilhado: montar e salvar um dia ─────────────────────────────
+
+const HABITS = ['meditar', 'medicar', 'exercitar', 'comunicar', 'alimentar', 'estudar', 'descansar'];
+
+const buildAndSaveDay = async (dayData) => {
+    const { date, peso, sentimento, obs, ...habitsRaw } = dayData;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+
+    const dailyDoc = {
+        date,
+        dateFormatted: formatDateDisplay(date),
+        weekStart: getWeekStart(date),
+        dayOfWeek: getDayName(date),
+        peso: peso || null,
+        sentimento: sentimento || '',
+        obs: obs || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    for (const habit of HABITS) {
+        dailyDoc[habit] = habitsRaw[habit] === true || habitsRaw[habit] === 'true';
+    }
+
+    await db.collection(DAILY_HABITS).doc(date).set(dailyDoc);
+    return dailyDoc;
+};
+
+// ── Endpoint: múltiplos dias estruturados ────────────────────────────────────
+
+app.post('/api/openclaw/week', async (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${process.env.OPENCLAW_SECRET}`) {
+        return res.status(401).json({ success: false, error: 'Não autorizado' });
+    }
+
+    if (!Array.isArray(req.body) || req.body.length === 0) {
+        return res.status(400).json({ success: false, error: 'Body deve ser um array de dias não-vazio' });
+    }
+
+    try {
+        const savedDays = [];
+        const weekStarts = new Set();
+
+        for (const dayData of req.body) {
+            const doc = await buildAndSaveDay(dayData);
+            if (doc) {
+                savedDays.push(doc);
+                weekStarts.add(doc.weekStart);
+            }
+        }
+
+        if (savedDays.length === 0) {
+            return res.status(400).json({ success: false, error: 'Nenhum dia válido encontrado no array' });
+        }
+
+        for (const weekStart of weekStarts) {
+            await recalculateWeek(weekStart);
+        }
+
+        console.log(`✅ OpenClaw/week salvou ${savedDays.length} dias, recalculou ${weekStarts.size} semana(s)`);
+        res.json({
+            success: true,
+            data: {
+                saved: savedDays.length,
+                skipped: req.body.length - savedDays.length,
+                weeksRecalculated: Array.from(weekStarts),
+                days: savedDays
+            }
+        });
+    } catch (error) {
+        console.error(`❌ Erro OpenClaw/week: ${error.message}`);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ── Endpoint: linguagem natural → Claude → Firestore ─────────────────────────
+
+app.post('/api/openclaw/parse', async (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${process.env.OPENCLAW_SECRET}`) {
+        return res.status(401).json({ success: false, error: 'Não autorizado' });
+    }
+
+    const { text, referenceDate } = req.body;
+    if (!text) {
+        return res.status(400).json({ success: false, error: 'Campo "text" obrigatório' });
+    }
+    if (!referenceDate || !/^\d{4}-\d{2}-\d{2}$/.test(referenceDate)) {
+        return res.status(400).json({ success: false, error: 'Campo "referenceDate" obrigatório no formato YYYY-MM-DD' });
+    }
+
+    const prompt = `Hoje é ${referenceDate}. Extraia dados de hábitos do seguinte texto e retorne um JSON array.
+
+Hábitos disponíveis (todos booleanos):
+- meditar: meditação diária
+- medicar: tomar medicação
+- exercitar: exercício físico
+- comunicar: checkpoint de comunicação semanal
+- alimentar: alimentação saudável
+- estudar: estudo/leitura
+- descansar: descanso/sono adequado
+
+Regras:
+- Hábito não mencionado = false
+- peso em kg (número), null se não mencionado
+- sentimento: string livre se mencionado humor/energia, caso contrário ""
+- obs: resumo conciso de contexto relevante mencionado, caso contrário ""
+- Resolva referências de tempo ("semana passada", "ontem", "segunda-feira") usando a data de referência
+- Se o usuário falar de uma semana inteira sem especificar dias, gere um objeto por dia (de domingo a sábado da semana referenciada)
+- Retorne SOMENTE o JSON array, sem explicações, sem markdown
+
+Formato de cada objeto:
+{"date":"YYYY-MM-DD","meditar":bool,"medicar":bool,"exercitar":bool,"comunicar":bool,"alimentar":bool,"estudar":bool,"descansar":bool,"peso":number|null,"sentimento":"","obs":""}
+
+Texto: "${text}"`;
+
+    try {
+        const resposta = await anthropic.messages.create({
+            model: "claude-opus-4-6",
+            max_tokens: 2000,
+            messages: [{ role: "user", content: prompt }]
+        });
+
+        const rawJson = resposta.content[0].text.trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+        let parsed;
+        try {
+            parsed = JSON.parse(rawJson);
+        } catch {
+            return res.status(500).json({ success: false, error: 'Claude retornou JSON inválido', raw: rawJson });
+        }
+
+        if (!Array.isArray(parsed)) {
+            return res.status(500).json({ success: false, error: 'Claude não retornou um array', raw: rawJson });
+        }
+
+        const savedDays = [];
+        const weekStarts = new Set();
+
+        for (const dayData of parsed) {
+            const doc = await buildAndSaveDay(dayData);
+            if (doc) {
+                savedDays.push(doc);
+                weekStarts.add(doc.weekStart);
+            }
+        }
+
+        for (const weekStart of weekStarts) {
+            await recalculateWeek(weekStart);
+        }
+
+        console.log(`✅ OpenClaw/parse salvou ${savedDays.length} dias de texto livre`);
+        res.json({
+            success: true,
+            data: {
+                parsed,
+                saved: savedDays.length,
+                skipped: parsed.length - savedDays.length,
+                weeksRecalculated: Array.from(weekStarts)
+            }
+        });
+    } catch (error) {
+        console.error(`❌ Erro OpenClaw/parse: ${error.message}`);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Testar Claude quando servidor iniciar
 testarClaude();
 
