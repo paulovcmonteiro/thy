@@ -257,19 +257,25 @@ const buildAndSaveDay = async (dayData) => {
     const { date, peso, sentimento, obs, ...habitsRaw } = dayData;
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
 
+    const existingDoc = await db.collection(DAILY_HABITS).doc(date).get();
+    const existing = existingDoc.exists ? existingDoc.data() : {};
+
+    const obsPartes = [existing.obs, obs].filter(Boolean);
+
     const dailyDoc = {
         date,
         dateFormatted: formatDateDisplay(date),
         weekStart: getWeekStart(date),
         dayOfWeek: getDayName(date),
-        peso: peso || null,
-        sentimento: sentimento || '',
-        obs: obs || '',
-        createdAt: new Date().toISOString(),
+        peso: peso || existing.peso || null,
+        sentimento: sentimento || existing.sentimento || '',
+        obs: obsPartes.join(' | '),
+        createdAt: existing.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
     for (const habit of HABITS) {
-        dailyDoc[habit] = habitsRaw[habit] === true || habitsRaw[habit] === 'true';
+        const newVal = habitsRaw[habit] === true || habitsRaw[habit] === 'true';
+        dailyDoc[habit] = existing[habit] || newVal;
     }
 
     await db.collection(DAILY_HABITS).doc(date).set(dailyDoc);
