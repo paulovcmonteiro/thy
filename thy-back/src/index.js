@@ -338,13 +338,15 @@ app.post('/api/openclaw/parse', async (req, res) => {
         return res.status(401).json({ success: false, error: 'Não autorizado' });
     }
 
-    const { text, referenceDate } = req.body;
+    const { text, referenceDate, lastDate } = req.body;
     if (!text) {
         return res.status(400).json({ success: false, error: 'Campo "text" obrigatório' });
     }
     if (!referenceDate || !/^\d{4}-\d{2}-\d{2}$/.test(referenceDate)) {
         return res.status(400).json({ success: false, error: 'Campo "referenceDate" obrigatório no formato YYYY-MM-DD' });
     }
+
+    const defaultDate = (lastDate && /^\d{4}-\d{2}-\d{2}$/.test(lastDate)) ? lastDate : referenceDate;
 
     const prompt = `Hoje é ${referenceDate}. Extraia dados de hábitos do seguinte texto e retorne um JSON array.
 
@@ -362,7 +364,8 @@ Regras:
 - peso em kg (número), null se não mencionado
 - sentimento: string livre se mencionado humor/energia, caso contrário ""
 - obs: resumo conciso de contexto relevante mencionado, caso contrário ""
-- Resolva referências de tempo ("semana passada", "ontem", "segunda-feira") usando a data de referência
+- Se nenhuma data específica for mencionada no texto, use ${defaultDate} como data padrão
+- Resolva referências de tempo ("semana passada", "ontem", "segunda-feira") usando a data de referência ${referenceDate}
 - Se o usuário falar de uma semana inteira sem especificar dias, gere um objeto por dia (de domingo a sábado da semana referenciada)
 - Retorne SOMENTE o JSON array, sem explicações, sem markdown
 
