@@ -362,7 +362,7 @@ Hábitos disponíveis (todos booleanos):
 Regras:
 - Hábito não mencionado = false
 - peso em kg (número), null se não mencionado
-- sentimento: string livre se mencionado humor/energia, caso contrário ""
+- sentimento: string curta descrevendo humor, energia ou produtividade (ex: "produtivo", "ansioso", "cansado", "normal", "sonolento") — capture mesmo que mencionado indiretamente (ex: "produtividade boa" → "produtivo", "dia normal" → "normal"), caso contrário ""
 - obs: resumo conciso de contexto relevante mencionado, caso contrário ""
 - Se nenhuma data específica for mencionada no texto, use ${defaultDate} como data padrão
 - Resolva referências de tempo ("semana passada", "ontem", "segunda-feira") usando a data de referência ${referenceDate}
