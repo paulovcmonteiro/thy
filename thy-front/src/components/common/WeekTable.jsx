@@ -136,23 +136,37 @@ const WeekTable = ({
                       <span className="text-base sm:text-lg font-medium">{habit.name}</span>
                     </div>
                   </td>
-                  {allDays.map(day => (
-                    <td 
-                      key={day.dayInfo.date} 
-                      className={`text-center py-3 px-1 ${isEditable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
-                      onClick={() => isEditable && onDayClick && onDayClick(day.dayInfo.date)}
-                    >
-                      {day[habit.key] ? (
-                        <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-100 rounded-full mx-auto"></div>
-                      )}
-                    </td>
-                  ))}
+                  {allDays.map(day => {
+                    const dayOfWeek = new Date(day.dayInfo.date + 'T00:00:00').getDay();
+
+                    // 🆕 Para comunicar, apenas mostrar conteúdo em Sex/Sáb
+                    if (habit.key === 'comunicar' && dayOfWeek !== 5 && dayOfWeek !== 6) {
+                      return (
+                        <td key={day.dayInfo.date} className="text-center py-3 px-1 bg-gray-50">
+                          <span className="text-gray-300 text-xs">-</span>
+                        </td>
+                      );
+                    }
+
+                    // Renderização normal para outros hábitos
+                    return (
+                      <td
+                        key={day.dayInfo.date}
+                        className={`text-center py-3 px-1 ${isEditable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                        onClick={() => isEditable && onDayClick && onDayClick(day.dayInfo.date)}
+                      >
+                        {day[habit.key] ? (
+                          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-100 rounded-full mx-auto"></div>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
 

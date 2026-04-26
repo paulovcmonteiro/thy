@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Calendar, Save, Check, AlertCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import useDashboardData from '../../hooks/useDashboardData';
-import { getDayHabits, getMostRecentDateWithData } from '../../firebase/habitsService';
+import { getDayHabits, getMostRecentDateWithData, saveDailyHabits, getWeekStart } from '../../firebase/habitsService';
 
 const AddDayForm = ({ isOpen, onClose }) => {
   const { addNewDay, refreshData } = useDashboardData();
@@ -72,14 +72,28 @@ const AddDayForm = ({ isOpen, onClose }) => {
 
   // Novo estado para controlar o passo do formulário mobile
   const [step, setStep] = useState(1);
+
+  // 🆕 ESTADO PARA CONSTRAINT DE MEDICAR (uma vez por semana)
+  const [medicarAlreadyMarked, setMedicarAlreadyMarked] = useState(null);
   
 
   // Lista de hábitos com emojis
   const habitsList = [
     { key: 'meditar', label: '🧘 Meditar', description: 'Meditação ou mindfulness' },
-    { key: 'medicar', label: '💊 Medicar', description: 'Tomar medicamentos' },
+    {
+      key: 'medicar',
+      label: '💊 Medicar',
+      description: 'Tomar medicamentos',
+      constraint: 'once-per-week'
+    },
     { key: 'exercitar', label: '🏃 Exercitar', description: 'Atividade física' },
-    { key: 'comunicar', label: '💬 Comunicar', description: 'Comunicação importante' },
+    {
+      key: 'comunicar',
+      label: '💬 Comunicar',
+      description: 'Comunicação importante',
+      constraint: 'specific-days',
+      allowedDays: [5, 6] // Sexta (5) e Sábado (6)
+    },
     { key: 'alimentar', label: '🍎 Alimentar', description: 'Alimentação saudável' },
     { key: 'estudar', label: '📚 Estudar', description: 'Estudos ou aprendizado' },
     { key: 'descansar', label: '😴 Descansar', description: 'Descanso adequado' }
@@ -99,6 +113,47 @@ const AddDayForm = ({ isOpen, onClose }) => {
       console.log('💾 [AddDayForm] Data salva no localStorage:', dateISO);
     } catch (error) {
       console.warn('⚠️ [AddDayForm] Erro ao salvar data no localStorage:', error);
+    }
+  };
+
+  // 🆕 HELPER: Detectar dia da semana (0=domingo, 6=sábado)
+  const getDayOfWeek = (dateISO) => {
+    const date = new Date(dateISO + 'T00:00:00');
+    return date.getDay();
+  };
+
+  // 🆕 HELPER: Verificar se medicar já foi marcado nesta semana
+  const checkMedicarMarkedThisWeek = async (currentDateISO) => {
+    try {
+      // Usar getWeekStart importado
+      const weekStartISO = getWeekStart(currentDateISO);
+
+      // Buscar dados de todos os 7 dias da semana
+      const promises = [];
+      for (let i = 0; i < 7; i++) {
+        // Calcular data de cada dia da semana
+        const [year, month, day] = weekStartISO.split('-').map(Number);
+        const dayDate = new Date(Date.UTC(year, month - 1, day));
+        dayDate.setUTCDate(dayDate.getUTCDate() + i);
+
+        const dayYear = dayDate.getUTCFullYear();
+        const dayMonth = String(dayDate.getUTCMonth() + 1).padStart(2, '0');
+        const dayDay = String(dayDate.getUTCDate()).padStart(2, '0');
+        const dayISO = `${dayYear}-${dayMonth}-${dayDay}`;
+
+        // Não verificar o dia atual
+        if (dayISO !== currentDateISO) {
+          promises.push(getDayHabits(dayISO));
+        }
+      }
+
+      const results = await Promise.all(promises);
+      const medicaredDay = results.find(r => r.success && r.data?.medicar);
+
+      return medicaredDay ? medicaredDay.data.date : null;
+    } catch (error) {
+      console.error('❌ [AddDayForm] Erro ao verificar medicar:', error);
+      return null;
     }
   };
 
@@ -153,7 +208,12 @@ const AddDayForm = ({ isOpen, onClose }) => {
         setHasLoadedExistingData(true);
         setSaveStatus('idle');
       }
-      
+
+      // 🆕 Verificar se medicar já está marcado em outro dia desta semana
+      const medicaredDay = await checkMedicarMarkedThisWeek(dateISO);
+      setMedicarAlreadyMarked(medicaredDay);
+      console.log('🔍 [AddDayForm] Medicar já marcado esta semana?', medicaredDay || 'Não');
+
     } catch (error) {
       console.error('❌ [AddDayForm] Erro ao carregar dados existentes:', error);
       setHasLoadedExistingData(true);
@@ -348,16 +408,59 @@ const AddDayForm = ({ isOpen, onClose }) => {
   };
 
   // Handle toggle de hábitos COM AUTO-SAVE
-  const handleHabitToggle = (habitKey) => {
+  const handleHabitToggle = async (habitKey) => {
+    // 🆕 Validação especial para medicar (uma vez por semana)
+    if (habitKey === 'medicar' && !formData.medicar) {
+      // Tentando marcar medicar - verificar se já está marcado esta semana
+      const medicaredDay = await checkMedicarMarkedThisWeek(formData.date);
+      if (medicaredDay) {
+        const confirmed = window.confirm(
+          `Medicar já foi marcado em ${new Date(medicaredDay + 'T00:00:00')
+            .toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })}.\n\n` +
+          `Desmarcar aquele dia e marcar hoje?`
+        );
+
+        if (!confirmed) return; // Usuário cancelou
+
+        // Desmarcar o dia anterior
+        try {
+          const prevDayData = await getDayHabits(medicaredDay);
+          if (prevDayData.success && prevDayData.data) {
+            await saveDailyHabits(medicaredDay, {
+              ...prevDayData.data,
+              medicar: false
+            });
+            console.log('✅ [AddDayForm] Medicar desmarcado em', medicaredDay);
+          }
+
+          setMedicarAlreadyMarked(null);
+        } catch (error) {
+          console.error('❌ [AddDayForm] Erro ao desmarcar medicar:', error);
+          alert('Erro ao desmarcar medicar do dia anterior. Tente novamente.');
+          return;
+        }
+      }
+    }
+
+    // Toggle normal
     const newFormData = {
       ...formData,
       [habitKey]: !formData[habitKey]
     };
-    
+
     setFormData(newFormData);
 
     // 🆕 TRIGGER AUTO-SAVE
     triggerAutoSave(newFormData);
+
+    // 🆕 Se marcou medicar, atualizar estado
+    if (habitKey === 'medicar' && !formData[habitKey]) {
+      setMedicarAlreadyMarked(formData.date);
+    }
+    // Se desmarcou medicar, limpar estado
+    if (habitKey === 'medicar' && formData[habitKey]) {
+      setMedicarAlreadyMarked(null);
+    }
   };
 
   // 🔧 CORREÇÃO: useEffect COM FUNÇÃO ASYNC PARA BUSCAR ÚLTIMA DATA COM DADOS
@@ -689,7 +792,23 @@ const AddDayForm = ({ isOpen, onClose }) => {
               />
               {/* Hábitos em lista vertical, botões grandes */}
               <div className="flex flex-col gap-3 my-4">
-                {habitsList.map((habit, idx) => (
+                {/* 🆕 Filtrar hábitos baseado em constraints */}
+                {habitsList.filter(habit => {
+                  // Comunicar: apenas sexta e sábado
+                  if (habit.constraint === 'specific-days') {
+                    const dayOfWeek = getDayOfWeek(formData.date);
+                    return habit.allowedDays.includes(dayOfWeek);
+                  }
+
+                  // Medicar: esconder se já marcado em outro dia desta semana
+                  if (habit.constraint === 'once-per-week' &&
+                      medicarAlreadyMarked &&
+                      formData.date !== medicarAlreadyMarked) {
+                    return false;
+                  }
+
+                  return true;
+                }).map((habit, idx) => (
                   <button
                     key={habit.key}
                     type="button"
@@ -708,6 +827,16 @@ const AddDayForm = ({ isOpen, onClose }) => {
                   </button>
                 ))}
               </div>
+
+              {/* 🆕 Mensagem informativa quando medicar está oculto */}
+              {medicarAlreadyMarked && formData.date !== medicarAlreadyMarked && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                  <span className="text-blue-700">
+                    💊 Medicar já foi marcado em {new Date(medicarAlreadyMarked + 'T00:00:00')
+                      .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} esta semana
+                  </span>
+                </div>
+              )}
             </div>
             {/* Botão Próximo fixo na base */}
             <div className="w-full px-4 pb-4 pt-2 bg-white fixed bottom-0 left-0 z-20">
@@ -835,7 +964,23 @@ const AddDayForm = ({ isOpen, onClose }) => {
                 style={{ fontSize: '1.2rem' }}
               />
               <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
-                {habitsList.map((habit, idx) => (
+                {/* 🆕 Filtrar hábitos baseado em constraints */}
+                {habitsList.filter(habit => {
+                  // Comunicar: apenas sexta e sábado
+                  if (habit.constraint === 'specific-days') {
+                    const dayOfWeek = getDayOfWeek(formData.date);
+                    return habit.allowedDays.includes(dayOfWeek);
+                  }
+
+                  // Medicar: esconder se já marcado em outro dia desta semana
+                  if (habit.constraint === 'once-per-week' &&
+                      medicarAlreadyMarked &&
+                      formData.date !== medicarAlreadyMarked) {
+                    return false;
+                  }
+
+                  return true;
+                }).map((habit, idx) => (
                   <button
                     key={habit.key}
                     type="button"
@@ -854,6 +999,16 @@ const AddDayForm = ({ isOpen, onClose }) => {
                   </button>
                 ))}
               </div>
+
+              {/* 🆕 Mensagem informativa quando medicar está oculto - DESKTOP */}
+              {medicarAlreadyMarked && formData.date !== medicarAlreadyMarked && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm w-full max-w-2xl mx-auto">
+                  <span className="text-blue-700">
+                    💊 Medicar já foi marcado em {new Date(medicarAlreadyMarked + 'T00:00:00')
+                      .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} esta semana
+                  </span>
+                </div>
+              )}
 
               {/* 🆕 Pergunta sobre sentimento - DESKTOP */}
               <div className="w-full max-w-2xl mx-auto">

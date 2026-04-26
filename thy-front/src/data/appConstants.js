@@ -79,9 +79,22 @@ export const FORMAT_SETTINGS = {
 // Lista de hábitos com configurações
 export const HABITS_CONFIG = {
   meditar: { emoji: '🧘', label: 'Meditar', color: '#8b5cf6' },
-  medicar: { emoji: '💊', label: 'Medicar', color: '#ef4444' },
+  medicar: {
+    emoji: '💊',
+    label: 'Medicar',
+    color: '#ef4444',
+    constraint: 'once-per-week',
+    maxPerWeek: 1
+  },
   exercitar: { emoji: '🏃', label: 'Exercitar', color: '#10b981' },
-  comunicar: { emoji: '💬', label: 'Comunicar', color: '#4682B4' },
+  comunicar: {
+    emoji: '💬',
+    label: 'Comunicar',
+    color: '#4682B4',
+    constraint: 'specific-days',
+    allowedDays: [5, 6], // Sexta (5) e Sábado (6)
+    maxPerWeek: 1
+  },
   alimentar: { emoji: '🍎', label: 'Alimentar', color: '#84cc16' },
   estudar: { emoji: '📚', label: 'Estudar', color: '#f59e0b' },
   descansar: { emoji: '😴', label: 'Descansar', color: '#06b6d4' }

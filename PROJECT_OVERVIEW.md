@@ -11,12 +11,12 @@ Thy é um app de rastreamento de hábitos com dashboard visual, scoring semanal 
 ```
 thy/
 ├── thy-front/    → Frontend React (Vite + Tailwind)
-├── thy-back/     → Backend Node.js (Express + Claude API)
+├── thy-back/     → Backend Node.js (Express + Firebase Admin + Claude API)
 └── Firebase Firestore → Banco de dados cloud (NoSQL)
 ```
 
 - **Frontend**: React 18, Vite, Tailwind CSS, Recharts, Firebase SDK
-- **Backend**: Express 5, Anthropic SDK (Claude API)
+- **Backend**: Express 5, Anthropic SDK (Claude API), Firebase Admin SDK
 - **Database**: Firebase Firestore (cloud, real-time)
 - **AI**: Claude via N8N webhooks (insights + chat)
 - **Deploy**: Vercel (frontend e backend)
@@ -27,18 +27,20 @@ thy/
 
 Cada dia registra estes hábitos (booleanos true/false):
 
-| Hábito       | Emoji | Meta semanal (dias) | Pontos máx |
-|-------------|-------|---------------------|------------|
-| meditar     | 🧘    | 7                   | 7          |
-| medicar     | 💊    | 3                   | 3          |
-| exercitar   | 🏃    | 7                   | 7          |
-| comunicar   | 💬    | 5                   | 5          |
-| alimentar   | 🍎    | 6                   | 6          |
-| estudar     | 📚    | 6                   | 6          |
-| descansar   | 😴    | 6                   | 6          |
+| Hábito     | Emoji | Pontos máx/semana |
+|------------|-------|-------------------|
+| meditar    | 🧘    | 7                 |
+| medicar    | 💊    | 1                 |
+| exercitar  | 🏃    | 7                 |
+| comunicar  | 💬    | 1                 |
+| alimentar  | 🍎    | 6                 |
+| estudar    | 📚    | 6                 |
+| descansar  | 😴    | 6                 |
+
+Total máximo: **34 pontos base** + até **5 pontos de bônus peso** = **39 pontos possíveis**, normalizado sobre 40.
 
 Além dos hábitos, cada dia também registra:
-- **peso** (number, em kg)
+- **peso** (number, em kg — `null` se não informado)
 - **sentimento** (string: "ansioso", "normal", "produtivo", etc.)
 - **obs** (string: observações/notas do dia)
 
@@ -81,22 +83,22 @@ Resumo automático da semana. Document ID = domingo da semana (ex: "2025-01-19")
   "weekEnd": "2025-01-25",
   "pesoMedio": 84.8,
   "meditar": 5,
-  "medicar": 3,
+  "medicar": 1,
   "exercitar": 4,
-  "comunicar": 3,
+  "comunicar": 1,
   "alimentar": 5,
   "estudar": 4,
   "descansar": 6,
   "pontosBase": 30,
   "bonusPeso": 5,
   "totalPontos": 35,
-  "completude": 87.5
+  "completude": 87
 }
 ```
 
 **Sistema de pontuação:**
-- Pontos base: soma dos dias completados de cada hábito (máx 40)
-- Bônus peso: +5 se perdeu ≥0.3kg, +3 se perdeu 0-0.3kg, 0 se ganhou
+- Pontos base: soma dos dias completados de cada hábito (caps por hábito conforme tabela acima)
+- Bônus peso: +5 se perdeu ≥0.3kg vs semana anterior, +3 se perdeu 0–0.3kg, 0 se ganhou
 - Completude: (pontosBase + bonusPeso) / 40 × 100
 
 ### Collection: `weeklyDebriefings`
@@ -124,11 +126,16 @@ Reflexão semanal do usuário + insights da IA.
 
 ## API e Integrações
 
-### Backend Express (thy-back)
+### Backend Express (thy-back) — https://thy-back.vercel.app
 
 **POST /api/claude**
-- Envia prompt para Claude 3.5 Haiku
+- Envia prompt para Claude Opus 4.6
 - Retorna resposta de texto
+
+**POST /api/openclaw/habits**
+- Recebe hábitos do dia via OpenClaw (Telegram) e salva no Firestore
+- Recalcula `weekly_aggregates` automaticamente após salvar
+- Ver seção "Integração OpenClaw" abaixo para detalhes completos
 
 ### N8N Webhooks (thyself.app.n8n.cloud)
 
@@ -145,51 +152,69 @@ Reflexão semanal do usuário + insights da IA.
 4. **Debriefing semanal**: Formulário de reflexão em 3 etapas com auto-save
 5. **Insights IA**: Claude analisa dados e gera feedback personalizado em Markdown
 6. **Chat com IA**: Conversa contextual com acesso a todo o histórico
+7. **Registro via Telegram**: Hábitos registrados por áudio/texto via OpenClaw → endpoint do backend
 
 ---
 
-## Fluxo de Dados para Integração via WhatsApp
+## Integração OpenClaw (Telegram → App)
 
-Para registrar hábitos via WhatsApp/áudio, o fluxo ideal seria:
+O usuário fala ou digita no Telegram, o OpenClaw transcreve, interpreta e faz POST no backend.
 
-1. Usuário manda áudio no WhatsApp (ex: "Hoje meditei, treinei e pesei 84kg")
-2. OpenClaw transcreve o áudio
-3. OpenClaw interpreta e extrai: `meditar: true`, `exercitar: true`, `peso: 84`
-4. OpenClaw salva no Firestore na collection `daily_habits` com a data de hoje
+### Endpoint
 
-### Dados necessários para salvar um dia:
+```
+POST https://thy-back.vercel.app/api/openclaw/habits
+Authorization: Bearer thy-openclaw-2026
+Content-Type: application/json
+```
+
+### Payload
 
 ```json
 {
-  "date": "2025-01-20",
-  "dateFormatted": "20/01",
-  "weekStart": "2025-01-19",
-  "dayOfWeek": "monday",
-  "peso": 84,
+  "date": "2026-02-28",
   "meditar": true,
-  "medicar": false,
   "exercitar": true,
+  "medicar": false,
   "comunicar": false,
-  "alimentar": false,
+  "alimentar": true,
   "estudar": false,
-  "descansar": false,
-  "sentimento": "",
-  "obs": ""
+  "descansar": true,
+  "peso": 84.5,
+  "sentimento": "produtivo",
+  "obs": "Energia boa hoje"
 }
 ```
 
-**Regras importantes:**
-- A semana começa no domingo (`weekStart` = domingo anterior)
-- `dayOfWeek` em inglês minúsculo: sunday, monday, tuesday, etc.
-- Hábitos não mencionados devem ser `false`
-- `peso` é `null` se não informado
-- Após salvar em `daily_habits`, precisa recalcular o `weekly_aggregates` da semana correspondente
+### Regras de interpretação
 
-### Firestore Config
+- `date`: obrigatório, formato `YYYY-MM-DD`
+- Hábitos não mencionados = `false`
+- `peso`: número em kg, `null` se não mencionado
+- `sentimento` e `obs`: strings livres, vazias se não mencionadas
+- O backend calcula `weekStart`, `dayOfWeek` e `dateFormatted` automaticamente
+- O backend recalcula `weekly_aggregates` automaticamente após salvar
 
-- Project ID: `habit-trackerv1`
-- Auth Domain: `habit-trackerv1.firebaseapp.com`
-- As credenciais de acesso ao Firebase estão no arquivo `thy-front/src/firebase/config.js`
+### Exemplo de áudio/texto esperado
+
+> "Hoje meditei, treinei, comi bem e dormi bem. Pesei 84kg. Tô me sentindo produtivo."
+
+O OpenClaw deve extrair:
+```json
+{
+  "date": "<hoje>",
+  "meditar": true,
+  "exercitar": true,
+  "alimentar": true,
+  "descansar": true,
+  "medicar": false,
+  "comunicar": false,
+  "estudar": false,
+  "peso": 84,
+  "sentimento": "produtivo",
+  "obs": ""
+}
+```
 
 ---
 
@@ -198,10 +223,10 @@ Para registrar hábitos via WhatsApp/áudio, o fluxo ideal seria:
 | Arquivo | O que faz |
 |---------|-----------|
 | `thy-front/src/firebase/config.js` | Configuração do Firebase |
-| `thy-front/src/firebase/habitsService.js` | CRUD de hábitos diários + aggregação semanal |
+| `thy-front/src/firebase/habitsService.js` | CRUD de hábitos diários + aggregação semanal (frontend) |
 | `thy-front/src/firebase/debriefingService.js` | CRUD de debriefings semanais |
 | `thy-front/src/services/aiService.js` | Geração de insights via N8N |
 | `thy-front/src/services/aiChatService.js` | Chat contextual com IA |
 | `thy-front/src/hooks/useDashboardData.js` | Busca e transformação de dados |
 | `thy-front/src/data/appConstants.js` | Constantes (metas, nomes dos hábitos) |
-| `thy-back/src/index.js` | Servidor Express + endpoint Claude |
+| `thy-back/src/index.js` | Servidor Express + endpoints Claude e OpenClaw |

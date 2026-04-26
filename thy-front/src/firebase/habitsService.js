@@ -19,17 +19,17 @@ import {
   
   // 🆕 CONFIGURAÇÕES DOS HÁBITOS (suas regras) - CORRIGIDAS
   const habitMaxValues = {
-    meditar: 7,    
-    medicar: 3,    
-    exercitar: 7,  
-    comunicar: 5,  
+    meditar: 7,
+    medicar: 1,    // 🔧 REDUZIDO de 3 para 1 (uma vez por semana)
+    exercitar: 7,
+    comunicar: 1,  // 🔧 REDUZIDO de 5 para 1 (checkpoint semanal)
     alimentar: 6,  // 🔧 REDUZIDO de 7 para 6
     estudar: 6,    // 🔧 REDUZIDO de 7 para 6
     descansar: 6   // 🔧 REDUZIDO de 7 para 6
   };
   
   // 📅 FUNÇÕES UTILITÁRIAS DE DATA - CORRIGIDAS
-  const getWeekStart = (dateISO) => {
+  export const getWeekStart = (dateISO) => {
     // ✅ CORREÇÃO: Usar diretamente strings para evitar problemas de timezone
     const [year, month, day] = dateISO.split('-').map(Number);
     
