@@ -73,8 +73,9 @@ const AddDayForm = ({ isOpen, onClose }) => {
   // Novo estado para controlar o passo do formulário mobile
   const [step, setStep] = useState(1);
 
-  // 🆕 ESTADO PARA CONSTRAINT DE MEDICAR (uma vez por semana)
+  // 🆕 ESTADO PARA CONSTRAINTS DE UMA VEZ POR SEMANA
   const [medicarAlreadyMarked, setMedicarAlreadyMarked] = useState(null);
+  const [comunicarAlreadyMarked, setComunicarAlreadyMarked] = useState(null);
   
 
   // Lista de hábitos com emojis
@@ -91,8 +92,7 @@ const AddDayForm = ({ isOpen, onClose }) => {
       key: 'comunicar',
       label: '💬 Comunicar',
       description: 'Comunicação importante',
-      constraint: 'specific-days',
-      allowedDays: [5, 6] // Sexta (5) e Sábado (6)
+      constraint: 'once-per-week'
     },
     { key: 'alimentar', label: '🍎 Alimentar', description: 'Alimentação saudável' },
     { key: 'estudar', label: '📚 Estudar', description: 'Estudos ou aprendizado' },
@@ -157,6 +157,29 @@ const AddDayForm = ({ isOpen, onClose }) => {
     }
   };
 
+  // 🆕 HELPER: Verificar se comunicar já foi marcado nesta semana
+  const checkComunicarMarkedThisWeek = async (currentDateISO) => {
+    try {
+      const weekStartISO = getWeekStart(currentDateISO);
+      const promises = [];
+      for (let i = 0; i < 7; i++) {
+        const [year, month, day] = weekStartISO.split('-').map(Number);
+        const dayDate = new Date(Date.UTC(year, month - 1, day));
+        dayDate.setUTCDate(dayDate.getUTCDate() + i);
+        const dayISO = `${dayDate.getUTCFullYear()}-${String(dayDate.getUTCMonth() + 1).padStart(2, '0')}-${String(dayDate.getUTCDate()).padStart(2, '0')}`;
+        if (dayISO !== currentDateISO) {
+          promises.push(getDayHabits(dayISO));
+        }
+      }
+      const results = await Promise.all(promises);
+      const comunicaredDay = results.find(r => r.success && r.data?.comunicar);
+      return comunicaredDay ? comunicaredDay.data.date : null;
+    } catch (error) {
+      console.error('❌ [AddDayForm] Erro ao verificar comunicar:', error);
+      return null;
+    }
+  };
+
   // 🆕 FUNÇÃO: CARREGAR DADOS EXISTENTES DO DIA
   const loadExistingDay = useCallback(async (dateISO) => {
     try {
@@ -209,10 +232,13 @@ const AddDayForm = ({ isOpen, onClose }) => {
         setSaveStatus('idle');
       }
 
-      // 🆕 Verificar se medicar já está marcado em outro dia desta semana
-      const medicaredDay = await checkMedicarMarkedThisWeek(dateISO);
+      // 🆕 Verificar se medicar/comunicar já estão marcados em outro dia desta semana
+      const [medicaredDay, comunicaredDay] = await Promise.all([
+        checkMedicarMarkedThisWeek(dateISO),
+        checkComunicarMarkedThisWeek(dateISO)
+      ]);
       setMedicarAlreadyMarked(medicaredDay);
-      console.log('🔍 [AddDayForm] Medicar já marcado esta semana?', medicaredDay || 'Não');
+      setComunicarAlreadyMarked(comunicaredDay);
 
     } catch (error) {
       console.error('❌ [AddDayForm] Erro ao carregar dados existentes:', error);
@@ -794,17 +820,10 @@ const AddDayForm = ({ isOpen, onClose }) => {
               <div className="flex flex-col gap-3 my-4">
                 {/* 🆕 Filtrar hábitos baseado em constraints */}
                 {habitsList.filter(habit => {
-                  // Comunicar: apenas sexta e sábado
-                  if (habit.constraint === 'specific-days') {
-                    const dayOfWeek = getDayOfWeek(formData.date);
-                    return habit.allowedDays.includes(dayOfWeek);
-                  }
-
-                  // Medicar: esconder se já marcado em outro dia desta semana
-                  if (habit.constraint === 'once-per-week' &&
-                      medicarAlreadyMarked &&
-                      formData.date !== medicarAlreadyMarked) {
-                    return false;
+                  // Hábitos 1x/semana: esconder se já marcado em outro dia desta semana
+                  if (habit.constraint === 'once-per-week') {
+                    const alreadyMarked = habit.key === 'medicar' ? medicarAlreadyMarked : comunicarAlreadyMarked;
+                    if (alreadyMarked && formData.date !== alreadyMarked) return false;
                   }
 
                   return true;
@@ -828,11 +847,19 @@ const AddDayForm = ({ isOpen, onClose }) => {
                 ))}
               </div>
 
-              {/* 🆕 Mensagem informativa quando medicar está oculto */}
+              {/* 🆕 Mensagens informativas para hábitos 1x/semana já marcados */}
               {medicarAlreadyMarked && formData.date !== medicarAlreadyMarked && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
                   <span className="text-blue-700">
                     💊 Medicar já foi marcado em {new Date(medicarAlreadyMarked + 'T00:00:00')
+                      .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} esta semana
+                  </span>
+                </div>
+              )}
+              {comunicarAlreadyMarked && formData.date !== comunicarAlreadyMarked && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                  <span className="text-blue-700">
+                    💬 Comunicar já foi marcado em {new Date(comunicarAlreadyMarked + 'T00:00:00')
                       .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} esta semana
                   </span>
                 </div>
@@ -966,17 +993,10 @@ const AddDayForm = ({ isOpen, onClose }) => {
               <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
                 {/* 🆕 Filtrar hábitos baseado em constraints */}
                 {habitsList.filter(habit => {
-                  // Comunicar: apenas sexta e sábado
-                  if (habit.constraint === 'specific-days') {
-                    const dayOfWeek = getDayOfWeek(formData.date);
-                    return habit.allowedDays.includes(dayOfWeek);
-                  }
-
-                  // Medicar: esconder se já marcado em outro dia desta semana
-                  if (habit.constraint === 'once-per-week' &&
-                      medicarAlreadyMarked &&
-                      formData.date !== medicarAlreadyMarked) {
-                    return false;
+                  // Hábitos 1x/semana: esconder se já marcado em outro dia desta semana
+                  if (habit.constraint === 'once-per-week') {
+                    const alreadyMarked = habit.key === 'medicar' ? medicarAlreadyMarked : comunicarAlreadyMarked;
+                    if (alreadyMarked && formData.date !== alreadyMarked) return false;
                   }
 
                   return true;
@@ -1000,11 +1020,19 @@ const AddDayForm = ({ isOpen, onClose }) => {
                 ))}
               </div>
 
-              {/* 🆕 Mensagem informativa quando medicar está oculto - DESKTOP */}
+              {/* 🆕 Mensagens informativas para hábitos 1x/semana já marcados - DESKTOP */}
               {medicarAlreadyMarked && formData.date !== medicarAlreadyMarked && (
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm w-full max-w-2xl mx-auto">
                   <span className="text-blue-700">
                     💊 Medicar já foi marcado em {new Date(medicarAlreadyMarked + 'T00:00:00')
+                      .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} esta semana
+                  </span>
+                </div>
+              )}
+              {comunicarAlreadyMarked && formData.date !== comunicarAlreadyMarked && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm w-full max-w-2xl mx-auto">
+                  <span className="text-blue-700">
+                    💬 Comunicar já foi marcado em {new Date(comunicarAlreadyMarked + 'T00:00:00')
                       .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} esta semana
                   </span>
                 </div>

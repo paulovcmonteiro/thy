@@ -137,18 +137,6 @@ const WeekTable = ({
                     </div>
                   </td>
                   {allDays.map(day => {
-                    const dayOfWeek = new Date(day.dayInfo.date + 'T00:00:00').getDay();
-
-                    // 🆕 Para comunicar, apenas mostrar conteúdo em Sex/Sáb
-                    if (habit.key === 'comunicar' && dayOfWeek !== 5 && dayOfWeek !== 6) {
-                      return (
-                        <td key={day.dayInfo.date} className="text-center py-3 px-1 bg-gray-50">
-                          <span className="text-gray-300 text-xs">-</span>
-                        </td>
-                      );
-                    }
-
-                    // Renderização normal para outros hábitos
                     return (
                       <td
                         key={day.dayInfo.date}
