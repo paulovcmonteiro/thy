@@ -23,22 +23,29 @@ const CurrentWeekSection = ({ isExpanded, onToggle }) => {
     const weekDates = [];
     const sunday = new Date(brasiliaTime);
     sunday.setDate(brasiliaTime.getDate() - currentDay);
-    
-    for (let i = 0; i <= currentDay; i++) {
+
+    // 🆕 Aos domingos, voltar 7 dias para incluir a semana anterior inteira
+    const isSunday = currentDay === 0;
+    const startOffset = isSunday ? -7 : 0;
+    const endOffset = currentDay;
+
+    const todayStr = `${brasiliaTime.getFullYear()}-${String(brasiliaTime.getMonth() + 1).padStart(2, '0')}-${String(brasiliaTime.getDate()).padStart(2, '0')}`;
+
+    for (let i = startOffset; i <= endOffset; i++) {
       const date = new Date(sunday);
       date.setDate(sunday.getDate() + i);
-      
+
       const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i];
-      
+      const dayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][date.getDay()];
+
       weekDates.push({
         date: dateStr,
         dayName: dayName,
         dayNumber: date.getDate(),
-        isToday: dateStr === `${brasiliaTime.getFullYear()}-${String(brasiliaTime.getMonth() + 1).padStart(2, '0')}-${String(brasiliaTime.getDate()).padStart(2, '0')}`
+        isToday: dateStr === todayStr
       });
     }
-    
+
     return weekDates;
   };
 
