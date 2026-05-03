@@ -1,8 +1,9 @@
 // src/components/common/WeekTable.jsx - Componente genérico para tabelas de semana
 import React from 'react';
 import { Calendar } from 'lucide-react';
+import { HABITS_CONFIG } from '../../data/appConstants';
 
-const WeekTable = ({ 
+const WeekTable = ({
   weekData = {},           // Dados da semana
   title = "Semana",        // Título da tabela
   loading = false,         // Estado de carregamento
@@ -21,6 +22,11 @@ const WeekTable = ({
     { key: 'estudar', label: '📚', name: 'Estudar' },
     { key: 'descansar', label: '😴', name: 'Descansar' }
   ];
+
+  // 🆕 Separar hábitos diários dos semanais (1x/semana)
+  const isWeeklyHabit = (key) => HABITS_CONFIG[key]?.constraint === 'once-per-week';
+  const dailyHabits = habitsList.filter(h => !isWeeklyHabit(h.key));
+  const weeklyHabits = habitsList.filter(h => isWeeklyHabit(h.key));
 
   // Emojis de sentimento
   const sentimentEmojis = {
@@ -127,8 +133,8 @@ const WeekTable = ({
                 ))}
               </tr>
 
-              {/* Linhas dos Hábitos */}
-              {habitsList.map(habit => (
+              {/* Linhas dos Hábitos (apenas diários — semanais ficam fora da tabela) */}
+              {dailyHabits.map(habit => (
                 <tr key={habit.key} className="hover:bg-gray-50">
                   <td className="py-3 px-2 sm:py-4 sm:px-3 font-medium text-gray-700">
                     <div className="flex items-center gap-2 min-w-0">
@@ -186,6 +192,42 @@ const WeekTable = ({
             </tbody>
           </table>
         </div>
+
+        {/* 🆕 Seção: Hábitos semanais (1x/semana) */}
+        {weeklyHabits.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Hábitos semanais
+            </h4>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap">
+              {weeklyHabits.map(habit => {
+                const completedDay = allDays.find(day => day[habit.key]);
+                const dayLabel = completedDay
+                  ? `${completedDay.dayInfo.dayName.toLowerCase()} ${String(completedDay.dayInfo.dayNumber).padStart(2, '0')}/${completedDay.dayInfo.date.split('-')[1]}`
+                  : null;
+
+                return (
+                  <div
+                    key={habit.key}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${
+                      completedDay
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <span className="text-2xl">{habit.label}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-800">{habit.name}</div>
+                      <div className={`text-xs ${completedDay ? 'text-green-700' : 'text-gray-500'}`}>
+                        {completedDay ? `✅ ${dayLabel}` : '○ não feito esta semana'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

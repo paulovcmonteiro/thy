@@ -91,8 +91,7 @@ export const HABITS_CONFIG = {
     emoji: '💬',
     label: 'Comunicar',
     color: '#4682B4',
-    constraint: 'specific-days',
-    allowedDays: [5, 6], // Sexta (5) e Sábado (6)
+    constraint: 'once-per-week',
     maxPerWeek: 1
   },
   alimentar: { emoji: '🍎', label: 'Alimentar', color: '#84cc16' },
